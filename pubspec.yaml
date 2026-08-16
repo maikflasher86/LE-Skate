@@ -1,0 +1,52 @@
+name: inliner2
+description: "LE Skate Inline-Wetter Forecast App."
+publish_to: 'none'
+version: 0.1.3+4
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.9
+  http: ^1.6.0
+  intl: ^0.20.3
+  package_info_plus: ^10.2.1
+  shared_preferences: ^2.5.5
+  flutter_secure_storage: ^11.0.0
+  webview_flutter: ^4.14.1
+  google_mobile_ads: ^9.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  windows:
+    generate: true
+    image_path: "assets/images/inliner_icon.png"
+    icon_size: 256
+  macos:
+    generate: true
+    image_path: "assets/images/inliner_icon.png"
+  linux:
+    generate: true
+    image_path: "assets/images/inliner_icon.png"
+  image_path: "assets/images/inliner_icon.png"
+  min_sdk_android: 21
+  # Adaptive icon for Android 8+ (API 26+) – required for Samsung One UI
+  # and other launchers that enforce adaptive icon format.
+  adaptive_icon_foreground: "assets/images/inliner_icon.png"
+  adaptive_icon_background: "#0B1A3E"
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/inliner_icon.png
+    - assets/images/app_icon.png

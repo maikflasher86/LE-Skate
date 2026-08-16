@@ -1,0 +1,30 @@
+name: 'Create Secrets JSON'
+description: 'Generiert die secrets.json aus GitHub Secrets'
+
+inputs:
+  llm_api_key:
+    description: 'LLM API Key'
+    required: true
+  llm_api_base:
+    description: 'LLM API Base URL'
+    required: true
+  llm_model:
+    description: 'LLM Model'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - shell: bash
+      env:
+        LLM_API_KEY: ${{ inputs.llm_api_key }}
+        LLM_API_BASE: ${{ inputs.llm_api_base }}
+        LLM_MODEL: ${{ inputs.llm_model }}
+      run: |
+        cat <<EOF > secrets.json
+        {
+          "LLM_API_KEY": "$LLM_API_KEY",
+          "LLM_API_BASE": "$LLM_API_BASE",
+          "LLM_MODEL": "$LLM_MODEL"
+        }
+        EOF
