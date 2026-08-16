@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inliner2/ui/widgets/dual_line_chart_painter.dart';
@@ -145,10 +146,17 @@ class DualMiniLineChart extends StatelessWidget {
                       times.length * _pixelsPerPoint,
                       constraints.maxWidth,
                     );
-                    return SingleChildScrollView(
-                      controller: scrollController,
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
+                    return ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                        },
+                      ),
+                      child: SingleChildScrollView(
+                        controller: scrollController,
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
                         width: chartWidth,
                         child: Column(
                           children: [
@@ -199,6 +207,7 @@ class DualMiniLineChart extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
                         ),
                       ),
                     );

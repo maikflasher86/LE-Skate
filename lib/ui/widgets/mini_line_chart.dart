@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:inliner2/models/hourly_point.dart';
@@ -119,9 +120,16 @@ class MiniLineChart extends StatelessWidget {
                       points.length * _pixelsPerPoint,
                       constraints.maxWidth,
                     );
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
+                    return ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                        },
+                      ),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: SizedBox(
                         width: chartWidth,
                         child: Column(
                           children: [
@@ -171,6 +179,7 @@ class MiniLineChart extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
                         ),
                       ),
                     );
