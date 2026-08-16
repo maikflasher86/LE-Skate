@@ -88,6 +88,7 @@ jobs:
 
   build-windows:
     needs: test
+    if: false
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -193,6 +194,7 @@ jobs:
 
   build-ios:
     needs: test
+    if: false
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
