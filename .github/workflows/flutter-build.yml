@@ -159,7 +159,7 @@ jobs:
           llm_model: ${{ vars.LLM_MODEL }}
 
       - name: Build Web Release
-        run: flutter build web --release --dart-define-from-file=secrets.json
+        run: flutter build web --release --base-href /LE-Skate/ --dart-define-from-file=secrets.json
 
       - name: Read app version
         id: app_version
