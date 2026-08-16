@@ -74,6 +74,19 @@ class InlinerWeatherApp extends StatelessWidget {
         ),
       ),
       home: ForecastPage(service: service),
+      // On web and Windows constrain content to a readable max width and fill
+      // the remaining screen width with the app background color.
+      builder: (kIsWeb || Platform.isWindows)
+          ? (context, child) => ColoredBox(
+                color: const Color(0xFF060D1F),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 700),
+                    child: child,
+                  ),
+                ),
+              )
+          : null,
     );
   }
 }

@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:inliner2/models/forecast_response.dart';
 import 'package:inliner2/services/forecast_service.dart';
@@ -20,12 +23,19 @@ class ForecastPage extends StatefulWidget {
 class _ForecastPageState extends State<ForecastPage> {
   late Future<ForecastResponse> _forecastFuture;
   bool _showAlternatives = TrainingSettingsService.defaultShowAlternatives;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _forecastFuture = widget.service.loadForecast();
     _loadShowAlternatives();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadShowAlternatives() async {
@@ -136,24 +146,29 @@ class _ForecastPageState extends State<ForecastPage> {
                 color: const Color(0xFF3B7BFF),
                 backgroundColor: const Color(0xFF0B1A3E),
                 onRefresh: _reload,
-                child: ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-                  children: [
-                    HeaderCard(response: data, onReload: _reload),
-                    const SizedBox(height: 14),
-                    for (final training in data.trainings.where(
-                      (t) =>
-                          _showAlternatives ||
-                          !isAlternativeTrainingDate(t.start),
-                    )) ...[
-                      TrainingCard(
-                        training: training,
-                        rawApiJson: data.rawApiJson,
-                      ),
-                      const SizedBox(height: 10),
+                child: Scrollbar(
+                  controller: _scrollController,
+                  thumbVisibility: kIsWeb || Platform.isWindows,
+                  child: ListView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+                    children: [
+                      HeaderCard(response: data, onReload: _reload),
+                      const SizedBox(height: 14),
+                      for (final training in data.trainings.where(
+                        (t) =>
+                            _showAlternatives ||
+                            !isAlternativeTrainingDate(t.start),
+                      )) ...[
+                        TrainingCard(
+                          training: training,
+                          rawApiJson: data.rawApiJson,
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               );
             },
