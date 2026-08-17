@@ -20,7 +20,7 @@ class InlinerWeatherApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'LE Skate Forecast',
+      title: 'LE Skate',
       //debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

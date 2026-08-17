@@ -1,4 +1,4 @@
-# Inliner Forecast App
+# LE Skate App
 
 Flutter app for inline skating training with integrated weather rating.
 
