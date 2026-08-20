@@ -55,7 +55,7 @@ class _ForecastPageState extends State<ForecastPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       // Show the ad banner at the bottom
-      bottomNavigationBar: const SafeArea(child: AdBannerWidget()),
+      // bottomNavigationBar: const SafeArea(child: AdBannerWidget()),
       body: DecoratedBox(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
