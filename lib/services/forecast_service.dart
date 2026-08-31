@@ -119,9 +119,9 @@ class ForecastService implements ForecastRepository {
     });
     payload = _addDwdToPayload(payload, dwdByLocation);
 
-    // Use the first available location's DWD data for global rain-event overrides.
+    // Merge the first available location's DWD data into the global rain events.
     final primaryDwd = dwdByLocation.values.firstOrNull ?? [];
-    payload = _overrideRainEventsFromDwd(payload, primaryDwd);
+    payload = _mergeRainEventsFromDwd(payload, primaryDwd);
 
     final evaluatedPayload = await _applyLlmEvaluation(payload);
 
@@ -180,27 +180,33 @@ class ForecastService implements ForecastRepository {
     return payload;
   }
 
-  /// Replaces last_rain_event and next_rain_event in the payload with DWD values.
-  Map<String, dynamic> _overrideRainEventsFromDwd(
+  /// Merges the DWD rain events into the payload.
+  ///
+  /// DWD (BrightSky) and Open-Meteo regularly disagree: DWD may report a dry
+  /// evening while Open-Meteo predicts rain. Previously the DWD values simply
+  /// replaced the Open-Meteo ones, so an imminent rain event was silently
+  /// dropped and the header contradicted the training evaluation. Now the more
+  /// relevant event wins: the most recent one for the past, the most imminent
+  /// one for the future.
+  Map<String, dynamic> _mergeRainEventsFromDwd(
     Map<String, dynamic> payload,
     List<DwdHourlyPoint> dwdPoints,
   ) {
     if (dwdPoints.isEmpty) return payload;
-    final nowUtc = DateTime.now()..toUtc();
-    final history24hStart = nowUtc.subtract(const Duration(hours: 24));
+    final now = DateTime.now();
+    final history24hStart = now.subtract(const Duration(hours: 24));
 
     // Last rain from DWD (last 24 hours)
-    // BrightSky timestamps are already in local time – no offset needed.
     Map<String, dynamic>? lastRain;
     for (var i = dwdPoints.length - 1; i >= 0; i--) {
       final p = dwdPoints[i];
-      final tUtc = p.time.toUtc();
-      if (!tUtc.isBefore(history24hStart) &&
-          !tUtc.isAfter(nowUtc) &&
+      if (!p.time.isBefore(history24hStart) &&
+          !p.time.isAfter(now) &&
           p.precipitationMm > 0.1) {
         lastRain = {
           'time': p.time.toIso8601String(),
           'rain_mm': p.precipitationMm,
+          'source': 'DWD',
         };
         break;
       }
@@ -209,18 +215,42 @@ class ForecastService implements ForecastRepository {
     // Next rain event from DWD (future)
     Map<String, dynamic>? nextRain;
     for (final p in dwdPoints) {
-      if (p.time.toUtc().isAfter(nowUtc) && p.precipitationMm > 0.1) {
+      if (p.time.isAfter(now) && p.precipitationMm > 0.1) {
         nextRain = {
           'time': p.time.toIso8601String(),
           'rain_mm': p.precipitationMm,
+          'source': 'DWD',
         };
         break;
       }
     }
 
-    payload['last_rain_event'] = lastRain;
-    payload['next_rain_event'] = nextRain;
+    payload['last_rain_event'] = _pickRainEvent(
+      payload['last_rain_event'] as Map<String, dynamic>?,
+      lastRain,
+      preferLater: true,
+    );
+    payload['next_rain_event'] = _pickRainEvent(
+      payload['next_rain_event'] as Map<String, dynamic>?,
+      nextRain,
+      preferLater: false,
+    );
     return payload;
+  }
+
+  /// Returns the event that matters more to the user: for past events the most
+  /// recent one, for future events the one occurring first.
+  Map<String, dynamic>? _pickRainEvent(
+    Map<String, dynamic>? a,
+    Map<String, dynamic>? b, {
+    required bool preferLater,
+  }) {
+    if (a == null) return b;
+    if (b == null) return a;
+    final timeA = DateTime.parse(a['time'] as String);
+    final timeB = DateTime.parse(b['time'] as String);
+    final takeB = preferLater ? timeB.isAfter(timeA) : timeB.isBefore(timeA);
+    return takeB ? b : a;
   }
 
   Future<Map<String, dynamic>> _applyLlmEvaluation(

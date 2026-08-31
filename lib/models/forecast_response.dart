@@ -2,10 +2,17 @@ import 'package:inliner2/models/location.dart';
 import 'package:inliner2/models/training_forecast.dart';
 
 class LastRainEvent {
-  const LastRainEvent({required this.time, required this.rainMm});
+  const LastRainEvent({
+    required this.time,
+    required this.rainMm,
+    this.source,
+  });
 
   final DateTime time;
   final double rainMm;
+
+  /// Which forecast provider reported this event ("DWD" or "Open-Meteo").
+  final String? source;
 }
 
 class ForecastResponse {
@@ -24,6 +31,7 @@ class ForecastResponse {
       return LastRainEvent(
         time: DateTime.parse(raw['time'] as String).toLocal(),
         rainMm: (raw['rain_mm'] as num).toDouble(),
+        source: raw['source'] as String?,
       );
     }
 

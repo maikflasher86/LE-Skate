@@ -203,6 +203,12 @@ class _LastRainInfo extends StatelessWidget {
       ? 'mäßiger Regen'
       : 'starker Regen';
 
+  String _details(LastRainEvent event) {
+    final intensity =
+        '${_intensity(event.rainMm)} (${event.rainMm.toStringAsFixed(1)} mm/h)';
+    return event.source == null ? intensity : '$intensity · ${event.source}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final nowUtc = DateTime.now().toUtc();
@@ -227,7 +233,7 @@ class _LastRainInfo extends StatelessWidget {
             const Icon(Icons.cloud_outlined, size: 11, color: Colors.white38),
             const SizedBox(width: 4),
             const Text(
-              'Niederschlag: DWD via BrightSky',
+              'Niederschlag: DWD via BrightSky & Open-Meteo',
               style: TextStyle(fontSize: 10, color: Colors.white38),
             ),
           ],
@@ -250,7 +256,7 @@ class _LastRainInfo extends StatelessWidget {
                     )
                   : Text(
                       'Zuletzt: ${_formatRainTime(validLast.time)}\n'
-                      '${_intensity(validLast.rainMm)} (${validLast.rainMm.toStringAsFixed(1)} mm/h)',
+                      '${_details(validLast)}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.white54,
@@ -281,7 +287,7 @@ class _LastRainInfo extends StatelessWidget {
                     )
                   : Text(
                       'Nächster Regen: ${_formatRainTime(validNext.time)}\n'
-                      '${_intensity(validNext.rainMm)} (${validNext.rainMm.toStringAsFixed(1)} mm/h)',
+                      '${_details(validNext)}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.lightBlueAccent,

@@ -187,7 +187,7 @@ Map<String, dynamic> buildForecastPayload(Map<String, dynamic> input) {
   for (var i = rainHistory24h.length - 1; i >= 0; i--) {
     final entry = rainHistory24h[i];
     if ((entry['rain_mm'] as double) > 0.1) {
-      lastRainEvent = entry;
+      lastRainEvent = {...entry, 'source': 'Open-Meteo'};
       break;
     }
   }
@@ -197,7 +197,11 @@ Map<String, dynamic> buildForecastPayload(Map<String, dynamic> input) {
   for (var i = 0; i < primary.times.length; i++) {
     final t = DateTime.parse(primary.times[i]).toLocal();
     if (t.isAfter(now) && primary.rains[i] > 0.1) {
-      nextRainEvent = {'time': primary.times[i], 'rain_mm': primary.rains[i]};
+      nextRainEvent = {
+        'time': primary.times[i],
+        'rain_mm': primary.rains[i],
+        'source': 'Open-Meteo',
+      };
       break;
     }
   }
