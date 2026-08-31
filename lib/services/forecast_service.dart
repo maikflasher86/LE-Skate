@@ -291,7 +291,12 @@ class ForecastService implements ForecastRepository {
 
         ## Empfehlungsformat (Feld "recommendation")
         - Immer als konkretes Zeitfenster: "Training HH:MM–HH:MM Uhr". Niemals pauschale Aussagen wie "1h kürzen" oder "verschieben" ohne Uhrzeiten.
-        - Setze recommendation="" wenn: (1) verdict=go und keine sinnvolle Anpassung existiert, (2) das Zeitfenster identisch mit dem geplanten start/end ist, oder (3) keine echte Verbesserung durch eine Zeitverschiebung erreichbar ist.
+        - PFLICHT: Bei verdict=maybe oder verdict=no MUSST du ein Zeitfenster angeben, sobald laut precipitation_15m im Bereich [frühester erlaubter Start … geplantes Ende + 2h] 
+          eine zusammenhängende trockene Phase von mindestens 45 Minuten existiert (trocken = precipitation_mm <= 0.1 UND precipitation_probability < 40). 
+          Kürze die Dauer notfalls auf diese Trockenphase.
+        - Setze recommendation="" nur wenn: (1) verdict=go und keine sinnvolle Anpassung existiert, (2) das Zeitfenster identisch mit dem geplanten start/end ist,
+          oder (3) im gesamten Suchbereich keine trockene Phase von mindestens 45 Minuten existiert.
+        - Wenn du eine recommendation empfiehlst, dann ergänze den Text im Feld "reason" mit einer Begründung, warum dieses Zeitfenster besser wäre.
 
         ## Begründung (Feld "reason")
         - Begründe ausfürlich. Erwähne, falls und wann es kurz vor dem Training geregnet hat.
@@ -326,7 +331,7 @@ class ForecastService implements ForecastRepository {
                 },
               ],
               'generationConfig': {
-                'temperature': 0.2,
+                'temperature': 0.0,
                 'responseMimeType': 'application/json',
               },
             }),
