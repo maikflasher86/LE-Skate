@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:inliner2/models/forecast_response.dart';
 import 'package:inliner2/services/forecast_service.dart';
 import 'package:inliner2/services/training_settings_service.dart';
-import 'package:inliner2/ui/widgets/ad_banner_widget.dart';
+//import 'package:inliner2/ui/widgets/ad_banner_widget.dart';
 import 'package:inliner2/ui/widgets/error_view.dart';
 import 'package:inliner2/ui/widgets/header_card.dart';
 import 'package:inliner2/ui/widgets/training_card.dart';

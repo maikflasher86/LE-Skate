@@ -380,7 +380,7 @@ class ForecastService implements ForecastRepository {
         throw Exception('LLM API Fehler (${llmResponse.statusCode}).');
       }
 
-      return compute(mergeLlmEvaluationsInPayload, {
+      return await compute(mergeLlmEvaluationsInPayload, {
         'payload': payload,
         'llmBody': llmResponse.body,
       });

@@ -670,7 +670,7 @@ class _WeatherGrid extends StatelessWidget {
   }
 }
 
-class _DwdDebugTable extends StatelessWidget {
+/*class _DwdDebugTable extends StatelessWidget {
   const _DwdDebugTable({required this.points});
 
   final List<DwdHourlyPoint> points;
@@ -716,4 +716,4 @@ class _DwdDebugTable extends StatelessWidget {
       ),
     );
   }
-}
+}*/
