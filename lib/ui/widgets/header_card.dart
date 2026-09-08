@@ -232,9 +232,12 @@ class _LastRainInfo extends StatelessWidget {
           children: [
             const Icon(Icons.cloud_outlined, size: 11, color: Colors.white38),
             const SizedBox(width: 4),
-            const Text(
-              'Niederschlag: DWD via BrightSky & Open-Meteo',
-              style: TextStyle(fontSize: 10, color: Colors.white38),
+            const Flexible(
+              child: Text(
+                'DWD via BrightSky & Open-Meteo',
+                style: TextStyle(fontSize: 10, color: Colors.white38),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),

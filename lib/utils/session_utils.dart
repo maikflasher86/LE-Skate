@@ -56,32 +56,61 @@ typedef ScheduleDayInfo = ({
 
 String _twoDigit(int n) => n.toString().padLeft(2, '0');
 
-/// Returns display info for every weekday, ordered Mon–Sun.
-List<ScheduleDayInfo> scheduleDayInfoList() => _schedule.entries
-    .map(
-      (e) => (
-        weekday: e.key,
-        weekdayName: e.value.weekdayName,
-        trainingTime:
-            '${_twoDigit(e.value.startHour)}:${_twoDigit(e.value.startMinute)}'
-            ' – '
-            '${_twoDigit(e.value.endHour)}:${_twoDigit(e.value.endMinute)}',
-        badgeLabel: e.value.badgeLabel,
-        category: e.value.category,
-        regularParity: e.value.regularParity,
-      ),
-    )
-    .toList();
+/// Returns true when [date] falls within the winter training season.
+///
+/// Winter runs from the last Monday of October through the last day of March.
+/// Specifically: month >= 11, or month <= 3, or (month == 10 && day >= lastMondayOfOctober).
+bool isWinterSeason(DateTime date) {
+  final m = date.month;
+  if (m >= 4 && m <= 9) return false;
+  if (m >= 11 || m <= 3) return true;
+  // month == 10: winter starts on the last Monday of October
+  final lastMonday = _lastMondayOfOctober(date.year);
+  return date.day >= lastMonday;
+}
 
-/// Training data per weekday including category and week parity rule.
-const Map<int, _ScheduleEntry> _schedule = {
+int _lastMondayOfOctober(int year) {
+  // Start from Oct 31 and go back until we hit a Monday (weekday == 1).
+  var d = DateTime(year, 10, 31);
+  while (d.weekday != DateTime.monday) {
+    d = d.subtract(const Duration(days: 1));
+  }
+  return d.day;
+}
+
+/// Returns the active schedule for [date] (summer or winter).
+Map<int, _ScheduleEntry> _scheduleFor(DateTime date) =>
+    isWinterSeason(date) ? _winterSchedule : _summerSchedule;
+
+/// Returns display info for every weekday of the current season, ordered Mon–Sun.
+List<ScheduleDayInfo> scheduleDayInfoList({DateTime? now}) {
+  final schedule = _scheduleFor(now ?? DateTime.now());
+  return schedule.entries
+      .map(
+        (e) => (
+          weekday: e.key,
+          weekdayName: e.value.weekdayName,
+          trainingTime:
+              '${_twoDigit(e.value.startHour)}:${_twoDigit(e.value.startMinute)}'
+              ' – '
+              '${_twoDigit(e.value.endHour)}:${_twoDigit(e.value.endMinute)}',
+          badgeLabel: e.value.badgeLabel,
+          category: e.value.category,
+          regularParity: e.value.regularParity,
+        ),
+      )
+      .toList();
+}
+
+/// Summer training data per weekday (April–last Monday of October).
+const Map<int, _ScheduleEntry> _summerSchedule = {
   1: (
     weekdayName: 'Montag',
     trainingName: 'Cossi',
     startHour: 18,
-    startMinute: 30,
-    endHour: 20,
-    endMinute: 0,
+    startMinute: 00, // Summer: 18:30
+    endHour: 19,
+    endMinute: 30, // Summer: 20:00
     location: cossiLocation,
     category: TrainingCategory.special,
     regularParity: WeekParity.any,
@@ -168,6 +197,36 @@ const Map<int, _ScheduleEntry> _schedule = {
   ),
 };
 
+/// Winter training data per weekday (last Monday of October – end of March).
+const Map<int, _ScheduleEntry> _winterSchedule = {
+  2: (
+    weekdayName: 'Dienstag',
+    trainingName: 'Outdoor',
+    startHour: 18,
+    startMinute: 30,
+    endHour: 19,
+    endMinute: 30,
+    location: landauerBrueckeLocation,
+    category: TrainingCategory.regular,
+    regularParity: WeekParity.any,
+    badgeLabel: 'Outdoor',
+    forecastDays: 8,
+  ),
+  6: (
+    weekdayName: 'Samstag',
+    trainingName: 'Sporthalle',
+    startHour: 14,
+    startMinute: 0,
+    endHour: 16,
+    endMinute: 0,
+    location: sporthalleEvsLocation,
+    category: TrainingCategory.regular,
+    regularParity: WeekParity.any,
+    badgeLabel: 'Indoor',
+    forecastDays: 8,
+  ),
+};
+
 /// ISO calendar week of a date.
 int isoWeekOf(DateTime d) {
   final thursday = d.add(Duration(days: 4 - d.weekday));
@@ -190,13 +249,13 @@ bool _parityMatches(WeekParity parity, int isoWeek) {
   }
 }
 
-/// Determines the category of a training session based on [_schedule].
+/// Determines the category of a training session based on the active schedule.
 ///
 /// - [TrainingCategory.regular] remains regular only if the week parity matches;
 ///   otherwise the session is automatically treated as [TrainingCategory.alternative].
 /// - [TrainingCategory.alternative] and [TrainingCategory.special] are passed through as-is.
 TrainingCategory categoryForDate(DateTime date) {
-  final entry = _schedule[date.weekday];
+  final entry = _scheduleFor(date)[date.weekday];
   if (entry == null) return TrainingCategory.alternative;
   switch (entry.category) {
     case TrainingCategory.regular:
@@ -219,10 +278,11 @@ bool isSpecialTrainingDate(DateTime date) =>
     categoryForDate(date) == TrainingCategory.special;
 
 /// Returns unique [Location]s (keyed by label) used by the given active weekdays.
-Map<String, Location> locationsForActiveDays(Set<int> activeDays) {
+Map<String, Location> locationsForActiveDays(Set<int> activeDays, {DateTime? now}) {
+  final schedule = _scheduleFor(now ?? DateTime.now());
   final result = <String, Location>{};
   for (final day in activeDays) {
-    final loc = _schedule[day]?.location;
+    final loc = schedule[day]?.location;
     if (loc != null) {
       result[loc.label] = loc;
     }
@@ -274,7 +334,7 @@ Map<String, int> forecastDaysPerLocation(
 
   // Fallback for locations that have no upcoming sessions in the window.
   for (final day in activeDays) {
-    final entry = _schedule[day];
+    final entry = _scheduleFor(reference)[day];
     if (entry == null) continue;
     final label = entry.location.label;
     if (!result.containsKey(label)) {
@@ -303,7 +363,7 @@ List<TrainingSession> nextSessions(
     final weekday = date.weekday;
     if (!activeDays.contains(weekday)) continue;
 
-    final entry = _schedule[weekday];
+    final entry = _scheduleFor(date)[weekday];
     if (entry == null) continue;
 
     final start = DateTime(

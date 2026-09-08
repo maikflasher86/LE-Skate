@@ -17,3 +17,17 @@ const bmwLocation = Location(
   lon: 12.448898635582006,
   label: 'BMW',
 );
+
+/// Outdoor training location at Landauer Brücke (winter Tuesday).
+const landauerBrueckeLocation = Location(
+  lat: 51.33636,
+  lon: 12.37212,
+  label: 'Landauer Brücke',
+);
+
+/// Indoor hall for winter Saturday training.
+const sporthalleEvsLocation = Location(
+  lat: 51.33499,
+  lon: 12.37985,
+  label: 'Sporthalle EVS',
+);
