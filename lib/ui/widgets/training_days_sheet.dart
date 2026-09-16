@@ -91,13 +91,12 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
           else
             for (final info in scheduleDayInfoList())
               _DayRow(
-                day: info.weekday,
-                name: info.weekdayName,
+                weekday: info.weekday,
                 time: info.trainingTime,
                 badgeLabel: info.badgeLabel,
                 badgeColor: _badgeColor(info.category, info.regularParity),
-                active: _activeDays.contains(info.weekday),
-                onChanged: (v) => _toggle(info.weekday, v),
+                active: _activeDays.contains(info.weekday.value),
+                onChanged: (v) => _toggle(info.weekday.value, v),
               ),
           if (!_loading) ...[
             const SizedBox(height: 12),
@@ -153,8 +152,7 @@ Color _badgeColor(TrainingCategory category, WeekParity parity) {
 
 class _DayRow extends StatelessWidget {
   const _DayRow({
-    required this.day,
-    required this.name,
+    required this.weekday,
     required this.time,
     required this.active,
     required this.onChanged,
@@ -162,15 +160,14 @@ class _DayRow extends StatelessWidget {
     this.badgeColor,
   });
 
-  final int day;
-  final String name;
+  final Weekday weekday;
   final String time;
   final bool active;
   final ValueChanged<bool> onChanged;
   final String? badgeLabel;
   final Color? badgeColor;
 
-  bool get _isWeekend => day >= 6;
+  bool get _isWeekend => weekday.value >= 6;
 
   @override
   Widget build(BuildContext context) {
@@ -197,7 +194,7 @@ class _DayRow extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                name,
+                weekday.label,
                 style: TextStyle(
                   fontSize: 15,
                   color: active ? Colors.white : Colors.white54,

@@ -23,7 +23,7 @@ enum WeekParity {
 }
 
 typedef _ScheduleEntry = ({
-  String weekdayName,
+  Weekday weekday,
   String trainingName,
   int startHour,
   int startMinute,
@@ -47,8 +47,7 @@ typedef _ScheduleEntry = ({
 
 /// Public display info for one weekday, used by the training-day planner.
 typedef ScheduleDayInfo = ({
-  int weekday,
-  String weekdayName,
+  Weekday weekday,
   String trainingTime,
   String? badgeLabel,
   TrainingCategory category,
@@ -57,18 +56,26 @@ typedef ScheduleDayInfo = ({
 
 String _twoDigit(int n) => n.toString().padLeft(2, '0');
 
-/// German weekday name for [DateTime.weekday] (1 = Montag … 7 = Sonntag).
-const List<String> _weekdayNames = [
-  'Montag',
-  'Dienstag',
-  'Mittwoch',
-  'Donnerstag',
-  'Freitag',
-  'Samstag',
-  'Sonntag',
-];
+/// Weekdays with their German display label, keyed by [DateTime.weekday]
+/// (1 = monday … 7 = sunday).
+enum Weekday {
+  monday(1, 'Montag'),
+  tuesday(2, 'Dienstag'),
+  wednesday(3, 'Mittwoch'),
+  thursday(4, 'Donnerstag'),
+  friday(5, 'Freitag'),
+  saturday(6, 'Samstag'),
+  sunday(7, 'Sonntag');
 
-String _weekdayNameOf(DateTime date) => _weekdayNames[date.weekday - 1];
+  const Weekday(this.value, this.label);
+
+  /// Matches [DateTime.weekday] (1 = Monday … 7 = Sunday).
+  final int value;
+  final String label;
+}
+
+String _weekdayNameOf(DateTime date) =>
+    Weekday.values.firstWhere((w) => w.value == date.weekday).label;
 
 /// Returns true when [date] falls within the winter training season.
 ///
@@ -102,8 +109,7 @@ List<ScheduleDayInfo> scheduleDayInfoList({DateTime? now}) {
   return schedule.entries
       .map(
         (e) => (
-          weekday: e.key,
-          weekdayName: e.value.weekdayName,
+          weekday: e.value.weekday,
           trainingTime:
               '${_twoDigit(e.value.startHour)}:${_twoDigit(e.value.startMinute)}'
               ' – '
@@ -119,7 +125,7 @@ List<ScheduleDayInfo> scheduleDayInfoList({DateTime? now}) {
 /// Summer training data per weekday (April–last Monday of October).
 const Map<int, _ScheduleEntry> _summerSchedule = {
   1: (
-    weekdayName: 'Montag',
+    weekday: Weekday.monday,
     trainingName: 'Cossi',
     startHour: 18,
     startMinute: 00, // Summer: 18:30
@@ -132,7 +138,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 1, // Cossi training is always Monday – no multi-day forecast needed
   ),
   2: (
-    weekdayName: 'Dienstag',
+    weekday: Weekday.tuesday,
     trainingName: 'Training',
     startHour: 19,
     startMinute: 0,
@@ -145,7 +151,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   3: (
-    weekdayName: 'Mittwoch',
+    weekday: Weekday.wednesday,
     trainingName: 'Technik',
     startHour: 19,
     startMinute: 0,
@@ -158,7 +164,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   4: (
-    weekdayName: 'Donnerstag',
+    weekday: Weekday.thursday,
     trainingName: 'Training',
     startHour: 19,
     startMinute: 0,
@@ -171,7 +177,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   5: (
-    weekdayName: 'Freitag',
+    weekday: Weekday.friday,
     trainingName: 'Training',
     startHour: 19,
     startMinute: 0,
@@ -184,7 +190,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   6: (
-    weekdayName: 'Samstag',
+    weekday: Weekday.saturday,
     trainingName: 'Training',
     startHour: 10,
     startMinute: 0,
@@ -197,7 +203,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   7: (
-    weekdayName: 'Sonntag',
+    weekday: Weekday.sunday,
     trainingName: 'Training',
     startHour: 10,
     startMinute: 0,
@@ -267,7 +273,7 @@ List<_OneTimeEvent> _relevantOneTimeEvents(
 /// Winter training data per weekday (last Monday of October – end of March).
 const Map<int, _ScheduleEntry> _winterSchedule = {
   2: (
-    weekdayName: 'Dienstag',
+    weekday: Weekday.tuesday,
     trainingName: 'Outdoor',
     startHour: 18,
     startMinute: 30,
@@ -280,7 +286,7 @@ const Map<int, _ScheduleEntry> _winterSchedule = {
     forecastDays: 8,
   ),
   6: (
-    weekdayName: 'Samstag',
+    weekday: Weekday.saturday,
     trainingName: 'Sporthalle',
     startHour: 14,
     startMinute: 0,
@@ -465,7 +471,7 @@ List<TrainingSession> nextSessions(
     sessions.add(
       TrainingSession(
         id: 'day${weekday}_${date.toIso8601String().substring(0, 10)}',
-        title: entry.weekdayName,
+        title: entry.weekday.label,
         trainingName: entry.trainingName,
         start: start,
         end: end,
