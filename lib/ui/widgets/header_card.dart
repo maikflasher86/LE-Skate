@@ -5,6 +5,7 @@ import 'package:inliner2/models/forecast_response.dart';
 import 'package:inliner2/ui/pages/about_page.dart';
 import 'package:inliner2/ui/widgets/rain_radar_sheet.dart';
 import 'package:inliner2/ui/widgets/training_days_sheet.dart';
+import 'package:inliner2/utils/date_utils.dart';
 import 'package:inliner2/utils/format_utils.dart';
 import 'package:intl/intl.dart';
 
@@ -186,10 +187,10 @@ class _LastRainInfo extends StatelessWidget {
 
   String _formatRainTime(DateTime time) {
     final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
+    final today = dateOnly(now);
     final yesterday = today.subtract(const Duration(days: 1));
     final tomorrow = today.add(const Duration(days: 1));
-    final eventDay = DateTime(time.year, time.month, time.day);
+    final eventDay = dateOnly(time);
     final timeStr = DateFormat('HH:mm').format(time);
     if (eventDay == today) return 'heute $timeStr Uhr';
     if (eventDay == yesterday) return 'gestern $timeStr Uhr';

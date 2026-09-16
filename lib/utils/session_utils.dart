@@ -1,5 +1,6 @@
 import 'package:inliner2/models/location.dart';
 import 'package:inliner2/models/training_session.dart';
+import 'package:inliner2/utils/date_utils.dart';
 import 'package:inliner2/utils/training_locations.dart';
 
 /// Classifies a training session.
@@ -214,9 +215,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
 /// e.g. an external event or exhibition, independent of the weekday schedule
 /// and the active-days toggle.
 typedef _OneTimeEvent = ({
-  int year,
-  int month,
-  int day,
+  DateTime date,
   String title,
   String trainingName,
   int startHour,
@@ -228,11 +227,9 @@ typedef _OneTimeEvent = ({
 
 /// One-off special events. Add new entries here to show a single event on a
 /// specific date; it disappears automatically once it is over.
-const List<_OneTimeEvent> _oneTimeEvents = [
+final List<_OneTimeEvent> _oneTimeEvents = [
   (
-    year: 2026,
-    month: 9,
-    day: 20,
+    date: DateTime(2026, 9, 20),
     title: 'Porsche Event',
     trainingName: 'Porsche Event',
     startHour: 11,
@@ -250,9 +247,9 @@ List<_OneTimeEvent> _relevantOneTimeEvents(
   DateTime now, {
   int windowDays = 28,
 }) {
-  final todayStart = DateTime(now.year, now.month, now.day);
+  final todayStart = dateOnly(now);
   return _oneTimeEvents.where((event) {
-    final eventDay = DateTime(event.year, event.month, event.day);
+    final eventDay = dateOnly(event.date);
     final daysAhead = eventDay.difference(todayStart).inDays;
     if (daysAhead < 0 || daysAhead > windowDays) return false;
     final end = DateTime(
@@ -390,11 +387,7 @@ Map<String, int> forecastDaysPerLocation(
   DateTime? now,
 }) {
   final reference = now ?? DateTime.now();
-  final todayStart = DateTime(
-    reference.year,
-    reference.month,
-    reference.day,
-  );
+  final todayStart = dateOnly(reference);
 
   // Use the same maxCount cap used elsewhere (14 sessions / 28-day window).
   final sessions = nextSessions(
@@ -407,11 +400,7 @@ Map<String, int> forecastDaysPerLocation(
 
   for (final session in sessions) {
     final label = session.location.label;
-    final sessionDay = DateTime(
-      session.start.year,
-      session.start.month,
-      session.start.day,
-    );
+    final sessionDay = dateOnly(session.start);
     // forecast_days=1 covers today only; +1 for each extra calendar day.
     final required =
         sessionDay.difference(todayStart).inDays + 1;
@@ -487,16 +476,16 @@ List<TrainingSession> nextSessions(
 
   for (final event in _relevantOneTimeEvents(now)) {
     final start = DateTime(
-      event.year,
-      event.month,
-      event.day,
+      event.date.year,
+      event.date.month,
+      event.date.day,
       event.startHour,
       event.startMinute,
     );
     final end = DateTime(
-      event.year,
-      event.month,
-      event.day,
+      event.date.year,
+      event.date.month,
+      event.date.day,
       event.endHour,
       event.endMinute,
     );

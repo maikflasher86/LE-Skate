@@ -1,3 +1,4 @@
+export 'package:inliner2/utils/date_utils.dart';
 export 'package:inliner2/utils/parsing_utils.dart';
 export 'package:inliner2/utils/format_utils.dart';
 export 'package:inliner2/utils/evaluation_utils.dart';
