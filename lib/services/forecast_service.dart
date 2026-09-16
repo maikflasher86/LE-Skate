@@ -38,7 +38,7 @@ class ForecastService implements ForecastRepository {
     // Load active days first to know which locations are needed.
     final activeDays = await TrainingSettingsService.loadActiveDays();
     final locationMap = locationsForActiveDays(activeDays);
-    final forecastDaysMap = forecastDaysPerLocation(activeDays);
+    final forecastDaysMap = await forecastDaysPerLocation(activeDays);
 
     // Build Open-Meteo URI for a specific location with its own forecast horizon.
     Uri openMeteoUri(Location loc) {

@@ -2,6 +2,8 @@ import 'package:inliner2/models/location.dart';
 import 'package:inliner2/models/training_session.dart';
 import 'package:inliner2/utils/date_utils.dart';
 import 'package:inliner2/utils/training_locations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 
 /// Classifies a training session.
 ///
@@ -23,7 +25,6 @@ enum WeekParity {
 }
 
 typedef _ScheduleEntry = ({
-  Weekday weekday,
   String trainingName,
   int startHour,
   int startMinute,
@@ -47,7 +48,7 @@ typedef _ScheduleEntry = ({
 
 /// Public display info for one weekday, used by the training-day planner.
 typedef ScheduleDayInfo = ({
-  Weekday weekday,
+  int weekday,
   String trainingTime,
   String? badgeLabel,
   TrainingCategory category,
@@ -56,26 +57,45 @@ typedef ScheduleDayInfo = ({
 
 String _twoDigit(int n) => n.toString().padLeft(2, '0');
 
-/// Weekdays with their German display label, keyed by [DateTime.weekday]
-/// via the [DateTime.monday] … [DateTime.sunday] constants.
-enum Weekday {
-  monday(DateTime.monday, 'Montag'),
-  tuesday(DateTime.tuesday, 'Dienstag'),
-  wednesday(DateTime.wednesday, 'Mittwoch'),
-  thursday(DateTime.thursday, 'Donnerstag'),
-  friday(DateTime.friday, 'Freitag'),
-  saturday(DateTime.saturday, 'Samstag'),
-  sunday(DateTime.sunday, 'Sonntag');
+/// Whether `intl`'s `de_DE` locale data has been loaded in *this* isolate.
+/// `compute()` spawns a fresh background isolate per call, which does not
+/// share the initialization done in `main()`'s isolate, so this is tracked
+/// (and lazily initialized) separately here.
+bool _germanLocaleInitialized = false;
 
-  const Weekday(this.value, this.label);
-
-  /// Matches [DateTime.weekday].
-  final int value;
-  final String label;
+Future<void> _ensureGermanLocaleInitialized() async {
+  if (_germanLocaleInitialized) return;
+  await initializeDateFormatting('de_DE');
+  _germanLocaleInitialized = true;
 }
 
-String _weekdayNameOf(DateTime date) =>
-    Weekday.values.firstWhere((w) => w.value == date.weekday).label;
+/// Ensures `intl`'s German locale data is loaded in the current isolate.
+/// Call this once from `main()` so synchronous label lookups (e.g.
+/// [weekdayLabel]) work right away in the UI isolate.
+Future<void> ensureGermanLocaleInitialized() => _ensureGermanLocaleInitialized();
+
+/// German weekday name for [date] (e.g. "Montag"), via `intl`. Safe to call
+/// from any isolate, including the background isolate spawned by `compute()`.
+Future<String> _weekdayNameOf(DateTime date) async {
+  await _ensureGermanLocaleInitialized();
+  return DateFormat('EEEE', 'de_DE').format(date);
+}
+
+/// A fixed, arbitrary Monday used only to turn a bare weekday number into a
+/// [DateTime] for [weekdayLabel]; the calendar date itself is irrelevant.
+final DateTime _referenceMonday = DateTime(2024, 1, 1);
+
+/// German label for [weekday] (matches [DateTime.weekday], e.g. 1 = "Montag").
+///
+/// Synchronous: requires the German locale to already be loaded in this
+/// isolate (see [ensureGermanLocaleInitialized]), which `main()` guarantees
+/// for the UI isolate. Use [_weekdayNameOf] instead when a concrete [DateTime]
+/// is available and the call may happen off the main isolate (e.g. inside
+/// `compute()`).
+String weekdayLabel(int weekday) => DateFormat(
+  'EEEE',
+  'de_DE',
+).format(_referenceMonday.add(Duration(days: weekday - DateTime.monday)));
 
 /// Returns true when [date] falls within the winter training season.
 ///
@@ -109,7 +129,7 @@ List<ScheduleDayInfo> scheduleDayInfoList({DateTime? now}) {
   return schedule.entries
       .map(
         (e) => (
-          weekday: e.value.weekday,
+          weekday: e.key,
           trainingTime:
               '${_twoDigit(e.value.startHour)}:${_twoDigit(e.value.startMinute)}'
               ' – '
@@ -125,7 +145,7 @@ List<ScheduleDayInfo> scheduleDayInfoList({DateTime? now}) {
 /// Summer training data per weekday (April–last Monday of October).
 const Map<int, _ScheduleEntry> _summerSchedule = {
   1: (
-    weekday: Weekday.monday,
+    // Monday
     trainingName: 'Cossi',
     startHour: 18,
     startMinute: 00, // Summer: 18:30
@@ -138,7 +158,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 1, // Cossi training is always Monday – no multi-day forecast needed
   ),
   2: (
-    weekday: Weekday.tuesday,
+    // Tuesday
     trainingName: 'Training',
     startHour: 19,
     startMinute: 0,
@@ -151,7 +171,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   3: (
-    weekday: Weekday.wednesday,
+    // Wednesday
     trainingName: 'Technik',
     startHour: 19,
     startMinute: 0,
@@ -164,7 +184,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   4: (
-    weekday: Weekday.thursday,
+    // Thursday
     trainingName: 'Training',
     startHour: 19,
     startMinute: 0,
@@ -177,7 +197,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   5: (
-    weekday: Weekday.friday,
+    // Friday
     trainingName: 'Training',
     startHour: 19,
     startMinute: 0,
@@ -190,7 +210,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   6: (
-    weekday: Weekday.saturday,
+    // Saturday
     trainingName: 'Training',
     startHour: 10,
     startMinute: 0,
@@ -203,7 +223,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     forecastDays: 8,
   ),
   7: (
-    weekday: Weekday.sunday,
+    // Sunday
     trainingName: 'Training',
     startHour: 10,
     startMinute: 0,
@@ -273,7 +293,7 @@ List<_OneTimeEvent> _relevantOneTimeEvents(
 /// Winter training data per weekday (last Monday of October – end of March).
 const Map<int, _ScheduleEntry> _winterSchedule = {
   2: (
-    weekday: Weekday.tuesday,
+    // Tuesday
     trainingName: 'Outdoor',
     startHour: 18,
     startMinute: 30,
@@ -286,7 +306,7 @@ const Map<int, _ScheduleEntry> _winterSchedule = {
     forecastDays: 8,
   ),
   6: (
-    weekday: Weekday.saturday,
+    // Saturday
     trainingName: 'Sporthalle',
     startHour: 14,
     startMinute: 0,
@@ -388,15 +408,15 @@ Map<String, Location> locationsForActiveDays(Set<int> activeDays, {DateTime? now
 /// so that Open-Meteo's `forecast_days` parameter covers every session.
 /// The [staticFallback] of the schedule entry is used when no sessions are
 /// found, and the result is always capped at 8.
-Map<String, int> forecastDaysPerLocation(
+Future<Map<String, int>> forecastDaysPerLocation(
   Set<int> activeDays, {
   DateTime? now,
-}) {
+}) async {
   final reference = now ?? DateTime.now();
   final todayStart = dateOnly(reference);
 
   // Use the same maxCount cap used elsewhere (14 sessions / 28-day window).
-  final sessions = nextSessions(
+  final sessions = await nextSessions(
     reference,
     activeDays: activeDays,
     maxCount: 14,
@@ -431,11 +451,11 @@ Map<String, int> forecastDaysPerLocation(
 /// Returns the next [maxCount] training sessions for active weekdays, plus
 /// any currently relevant one-time events (see `_oneTimeEvents`). One-time
 /// events are always included, independent of [activeDays].
-List<TrainingSession> nextSessions(
+Future<List<TrainingSession>> nextSessions(
   DateTime now, {
   required Set<int> activeDays,
   int maxCount = 5,
-}) {
+}) async {
   final sessions = <TrainingSession>[];
 
   for (
@@ -471,7 +491,7 @@ List<TrainingSession> nextSessions(
     sessions.add(
       TrainingSession(
         id: 'day${weekday}_${date.toIso8601String().substring(0, 10)}',
-        title: entry.weekday.label,
+        title: await _weekdayNameOf(date),
         trainingName: entry.trainingName,
         start: start,
         end: end,
@@ -498,7 +518,7 @@ List<TrainingSession> nextSessions(
     sessions.add(
       TrainingSession(
         id: '$oneTimeEventIdPrefix${start.toIso8601String().substring(0, 10)}_${event.title}',
-        title: _weekdayNameOf(start),
+        title: await _weekdayNameOf(start),
         trainingName: event.trainingName,
         start: start,
         end: end,

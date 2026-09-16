@@ -71,7 +71,9 @@ _LocationWeather _parseBody(String rawBody) {
 
 // ---------------------------------------------------------------------------
 
-Map<String, dynamic> buildForecastPayload(Map<String, dynamic> input) {
+Future<Map<String, dynamic>> buildForecastPayload(
+  Map<String, dynamic> input,
+) async {
   // bodies: Map<locationLabel, rawJsonBody>
   final rawBodies = (input['bodies'] as Map).cast<String, String>();
   final activeDays = (input['active_days'] as List<dynamic>)
@@ -89,8 +91,7 @@ Map<String, dynamic> buildForecastPayload(Map<String, dynamic> input) {
 
   final now = DateTime.now();
   final oneWeekAhead = now.add(const Duration(days: 7));
-  final sessions = nextSessions(now, activeDays: activeDays, maxCount: 14)
-    ..sort((a, b) => a.start.compareTo(b.start));
+  final sessions = await nextSessions(now, activeDays: activeDays, maxCount: 14);
   // All sessions within the next 7 days
   final limitedSessions = sessions
       .where((s) => !s.start.isAfter(oneWeekAhead))
