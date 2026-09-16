@@ -57,19 +57,19 @@ typedef ScheduleDayInfo = ({
 String _twoDigit(int n) => n.toString().padLeft(2, '0');
 
 /// Weekdays with their German display label, keyed by [DateTime.weekday]
-/// (1 = monday … 7 = sunday).
+/// via the [DateTime.monday] … [DateTime.sunday] constants.
 enum Weekday {
-  monday(1, 'Montag'),
-  tuesday(2, 'Dienstag'),
-  wednesday(3, 'Mittwoch'),
-  thursday(4, 'Donnerstag'),
-  friday(5, 'Freitag'),
-  saturday(6, 'Samstag'),
-  sunday(7, 'Sonntag');
+  monday(DateTime.monday, 'Montag'),
+  tuesday(DateTime.tuesday, 'Dienstag'),
+  wednesday(DateTime.wednesday, 'Mittwoch'),
+  thursday(DateTime.thursday, 'Donnerstag'),
+  friday(DateTime.friday, 'Freitag'),
+  saturday(DateTime.saturday, 'Samstag'),
+  sunday(DateTime.sunday, 'Sonntag');
 
   const Weekday(this.value, this.label);
 
-  /// Matches [DateTime.weekday] (1 = Monday … 7 = Sunday).
+  /// Matches [DateTime.weekday].
   final int value;
   final String label;
 }
