@@ -31,6 +31,10 @@ class TrainingCard extends StatelessWidget {
   /// Alternative training: Friday/Sunday outside calendar week rule only.
   bool get _isAlternativByKwRule => isAlternativeTrainingDate(training.start);
 
+  /// One-off special event (e.g. Porsche Event), independent of the
+  /// weekday/alternative schedule.
+  bool get _isOneTimeEvent => isOneTimeEventId(training.id);
+
   /// Calculates DWD data for the training window (null if no data).
   ({double totalMm, int maxProb})? _dwdDuring() {
     if (training.dwdPoints.isEmpty) return null;
@@ -136,14 +140,19 @@ class TrainingCard extends StatelessWidget {
                                             )
                                           else
                                             _Pill(
-                                              label: _isAlternativByKwRule
+                                              label: _isOneTimeEvent
+                                                  ? training.trainingName
+                                                  : _isAlternativByKwRule
                                                   ? 'Alternativ'
                                                   : training.trainingName,
-                                              icon: _isAlternativByKwRule
+                                              icon: _isOneTimeEvent
+                                                  ? Icons.event_rounded
+                                                  : _isAlternativByKwRule
                                                   ? Icons.swap_horiz_rounded
-                                                  : Icons
-                                                        .check_circle_outline_rounded,
-                                              color: _isAlternativByKwRule
+                                                  : Icons.check_circle_outline_rounded,
+                                              color: _isOneTimeEvent
+                                                  ? const Color(0xFF3B82F6)
+                                                  : _isAlternativByKwRule
                                                   ? const Color(0xFFF59E0B)
                                                   : const Color(0xFF22C55E),
                                             ),

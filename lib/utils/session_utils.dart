@@ -56,6 +56,19 @@ typedef ScheduleDayInfo = ({
 
 String _twoDigit(int n) => n.toString().padLeft(2, '0');
 
+/// German weekday name for [DateTime.weekday] (1 = Montag … 7 = Sonntag).
+const List<String> _weekdayNames = [
+  'Montag',
+  'Dienstag',
+  'Mittwoch',
+  'Donnerstag',
+  'Freitag',
+  'Samstag',
+  'Sonntag',
+];
+
+String _weekdayNameOf(DateTime date) => _weekdayNames[date.weekday - 1];
+
 /// Returns true when [date] falls within the winter training season.
 ///
 /// Winter runs from the last Monday of October through the last day of March.
@@ -197,6 +210,63 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
   ),
 };
 
+/// A single event that is shown only once on a specific calendar date,
+/// e.g. an external event or exhibition, independent of the weekday schedule
+/// and the active-days toggle.
+typedef _OneTimeEvent = ({
+  int year,
+  int month,
+  int day,
+  String title,
+  String trainingName,
+  int startHour,
+  int startMinute,
+  int endHour,
+  int endMinute,
+  Location location,
+});
+
+/// One-off special events. Add new entries here to show a single event on a
+/// specific date; it disappears automatically once it is over.
+const List<_OneTimeEvent> _oneTimeEvents = [
+  (
+    year: 2026,
+    month: 9,
+    day: 20,
+    title: 'Porsche Event',
+    trainingName: 'Porsche Event',
+    startHour: 11,
+    startMinute: 45,
+    endHour: 17,
+    endMinute: 0,
+    location: porscheLocation,
+  ),
+];
+
+/// Returns the `_oneTimeEvents` that are still relevant: not further away
+/// than [windowDays] and not already over (today's event stays visible even
+/// after its end time, mirroring the behavior of recurring sessions).
+List<_OneTimeEvent> _relevantOneTimeEvents(
+  DateTime now, {
+  int windowDays = 28,
+}) {
+  final todayStart = DateTime(now.year, now.month, now.day);
+  return _oneTimeEvents.where((event) {
+    final eventDay = DateTime(event.year, event.month, event.day);
+    final daysAhead = eventDay.difference(todayStart).inDays;
+    if (daysAhead < 0 || daysAhead > windowDays) return false;
+    final end = DateTime(
+      eventDay.year,
+      eventDay.month,
+      eventDay.day,
+      event.endHour,
+      event.endMinute,
+    );
+    if (end.isBefore(now) && daysAhead != 0) return false;
+    return true;
+  }).toList();
+}
+
 /// Winter training data per weekday (last Monday of October – end of March).
 const Map<int, _ScheduleEntry> _winterSchedule = {
   2: (
@@ -277,15 +347,32 @@ bool isRegularTrainingDate(DateTime date) =>
 bool isSpecialTrainingDate(DateTime date) =>
     categoryForDate(date) == TrainingCategory.special;
 
-/// Returns unique [Location]s (keyed by label) used by the given active weekdays.
+/// Prefix used for the synthetic session id of one-time events (see
+/// `_oneTimeEvents`). Used to recognize such sessions later in the pipeline
+/// (e.g. JSON payload, UI) without relying on weekday/date-based rules,
+/// which don't apply to one-off events.
+const String oneTimeEventIdPrefix = 'event_';
+
+/// Whether [id] (a [TrainingSession.id] / training id) belongs to a one-time
+/// event. Such sessions are never "Alternativ" and are always shown,
+/// independent of the "Alternative Trainings anzeigen" toggle.
+bool isOneTimeEventId(String id) => id.startsWith(oneTimeEventIdPrefix);
+
+/// Returns unique [Location]s (keyed by label) used by the given active
+/// weekdays, plus the locations of any currently relevant one-time events
+/// (those are shown regardless of the active-days toggle).
 Map<String, Location> locationsForActiveDays(Set<int> activeDays, {DateTime? now}) {
-  final schedule = _scheduleFor(now ?? DateTime.now());
+  final reference = now ?? DateTime.now();
+  final schedule = _scheduleFor(reference);
   final result = <String, Location>{};
   for (final day in activeDays) {
     final loc = schedule[day]?.location;
     if (loc != null) {
       result[loc.label] = loc;
     }
+  }
+  for (final event in _relevantOneTimeEvents(reference)) {
+    result[event.location.label] = event.location;
   }
   return result;
 }
@@ -346,7 +433,9 @@ Map<String, int> forecastDaysPerLocation(
   return result.map((k, v) => MapEntry(k, v.clamp(1, 8)));
 }
 
-/// Returns the next [maxCount] training sessions for active weekdays.
+/// Returns the next [maxCount] training sessions for active weekdays, plus
+/// any currently relevant one-time events (see `_oneTimeEvents`). One-time
+/// events are always included, independent of [activeDays].
 List<TrainingSession> nextSessions(
   DateTime now, {
   required Set<int> activeDays,
@@ -396,5 +485,35 @@ List<TrainingSession> nextSessions(
     );
   }
 
-  return sessions;
+  for (final event in _relevantOneTimeEvents(now)) {
+    final start = DateTime(
+      event.year,
+      event.month,
+      event.day,
+      event.startHour,
+      event.startMinute,
+    );
+    final end = DateTime(
+      event.year,
+      event.month,
+      event.day,
+      event.endHour,
+      event.endMinute,
+    );
+    sessions.add(
+      TrainingSession(
+        id: '$oneTimeEventIdPrefix${start.toIso8601String().substring(0, 10)}_${event.title}',
+        title: _weekdayNameOf(start),
+        trainingName: event.trainingName,
+        start: start,
+        end: end,
+        location: event.location,
+      ),
+    );
+  }
+
+  sessions.sort((a, b) => a.start.compareTo(b.start));
+  return sessions.length > maxCount
+      ? sessions.sublist(0, maxCount)
+      : sessions;
 }

@@ -158,6 +158,7 @@ class _ForecastPageState extends State<ForecastPage> {
                       const SizedBox(height: 14),
                       for (final training in data.trainings.where(
                         (t) =>
+                            isOneTimeEventId(t.id) ||
                             _showAlternatives ||
                             !isAlternativeTrainingDate(t.start),
                       )) ...[
