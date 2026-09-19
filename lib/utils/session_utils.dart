@@ -458,6 +458,13 @@ Future<List<TrainingSession>> nextSessions(
 }) async {
   final sessions = <TrainingSession>[];
 
+  // Dates on which a one-time event takes place replace the regular
+  // weekday training for that date (e.g. the Sunday training doesn't take
+  // place because of the Porsche Event), so no weather is fetched for it.
+  final oneTimeEventDates = _relevantOneTimeEvents(
+    now,
+  ).map((event) => dateOnly(event.date)).toSet();
+
   for (
     var daysAhead = 0;
     daysAhead <= 28 && sessions.length < maxCount;
@@ -466,6 +473,7 @@ Future<List<TrainingSession>> nextSessions(
     final date = now.add(Duration(days: daysAhead));
     final weekday = date.weekday;
     if (!activeDays.contains(weekday)) continue;
+    if (oneTimeEventDates.contains(dateOnly(date))) continue;
 
     final entry = _scheduleFor(date)[weekday];
     if (entry == null) continue;
