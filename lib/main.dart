@@ -2,14 +2,14 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+// import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:inliner2/services/forecast_service.dart';
 import 'package:inliner2/ui/pages/forecast_page.dart';
 import 'package:inliner2/utils/session_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) await MobileAds.instance.initialize();
+  // if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) await MobileAds.instance.initialize();
   // Needed for the synchronous German weekday labels shown in the UI
   // (e.g. TrainingDaysSheet). The background isolate spawned by compute()
   // initializes its own copy lazily, see session_utils.dart.

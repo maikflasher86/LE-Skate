@@ -381,6 +381,29 @@ const String oneTimeEventIdPrefix = 'event_';
 /// independent of the "Alternative Trainings anzeigen" toggle.
 bool isOneTimeEventId(String id) => id.startsWith(oneTimeEventIdPrefix);
 
+/// Resolves the weekdays that are actually usable for the current season's
+/// schedule.
+///
+/// The user's stored [activeDays] (e.g. the summer default `{1, 3, 5, 7}`)
+/// may not exist at all in the other season's schedule (winter only defines
+/// Tuesday and Saturday). Without this fallback that mismatch would leave
+/// zero active days, and in turn zero locations to fetch weather for, e.g.
+/// right after the season switches to winter. In that case, fall back to
+/// the current season's own regular (non-alternative) training days instead
+/// of ending up with no data at all.
+Set<int> effectiveActiveDays(Set<int> activeDays, {DateTime? now}) {
+  final reference = now ?? DateTime.now();
+  final schedule = _scheduleFor(reference);
+  final matching = activeDays.where(schedule.containsKey).toSet();
+  if (matching.isNotEmpty) return matching;
+
+  final regularDays = schedule.entries
+      .where((e) => e.value.category != TrainingCategory.alternative)
+      .map((e) => e.key)
+      .toSet();
+  return regularDays.isNotEmpty ? regularDays : schedule.keys.toSet();
+}
+
 /// Returns unique [Location]s (keyed by label) used by the given active
 /// weekdays, plus the locations of any currently relevant one-time events
 /// (those are shown regardless of the active-days toggle).

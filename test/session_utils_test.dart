@@ -27,4 +27,43 @@ void main() {
       },
     );
   });
+
+  group('effectiveActiveDays', () {
+    test(
+      'falls back to the winter schedule when stored days are summer-only',
+      () {
+        // Mid-November: winter season, whose schedule only defines
+        // Tuesday (2) and Saturday (6). The summer default {1, 3, 5, 7}
+        // doesn't match any winter day at all.
+        final winterDate = DateTime(2026, 11, 15);
+        final result = effectiveActiveDays({1, 3, 5, 7}, now: winterDate);
+
+        expect(result, {2, 6});
+      },
+    );
+
+    test('keeps the stored days when they match the current schedule', () {
+      final summerDate = DateTime(2026, 9, 18);
+      final result = effectiveActiveDays({1, 3, 5, 7}, now: summerDate);
+
+      expect(result, {1, 3, 5, 7});
+    });
+  });
+
+  group('locationsForActiveDays', () {
+    test(
+      'is never empty in winter even with summer-only stored active days',
+      () {
+        final winterDate = DateTime(2026, 11, 15);
+        final storedActiveDays = {1, 3, 5, 7};
+        final effective = effectiveActiveDays(
+          storedActiveDays,
+          now: winterDate,
+        );
+        final locations = locationsForActiveDays(effective, now: winterDate);
+
+        expect(locations, isNotEmpty);
+      },
+    );
+  });
 }

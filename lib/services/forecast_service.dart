@@ -35,8 +35,13 @@ class ForecastService implements ForecastRepository {
 
   @override
   Future<ForecastResponse> loadForecast() async {
-    // Load active days first to know which locations are needed.
-    final activeDays = await TrainingSettingsService.loadActiveDays();
+    // Load active days first to know which locations are needed. Fall back
+    // to the current season's own regular training days if the stored
+    // selection doesn't exist in this season's schedule at all (e.g. summer
+    // defaults don't match any winter training day), so we never end up
+    // with zero locations to fetch.
+    final storedActiveDays = await TrainingSettingsService.loadActiveDays();
+    final activeDays = effectiveActiveDays(storedActiveDays);
     final locationMap = locationsForActiveDays(activeDays);
     final forecastDaysMap = await forecastDaysPerLocation(activeDays);
 
@@ -159,8 +164,7 @@ class ForecastService implements ForecastRepository {
           dwdByLocation[locationLabel] ?? dwdByLocation.values.first;
       debugPrint(
         '[DWD] Training "${training['title']} ${training['start']}" '
-        '→ location "$locationLabel" '
-        '→ ${dwdPoints.length} DWD points available',
+        '→ location "$locationLabel"',
       );
       if (dwdPoints.isEmpty) {
         debugPrint('[DWD]   └─ no points, skipping');

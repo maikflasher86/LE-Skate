@@ -32,7 +32,7 @@ const sporthalleEvsLocation = Location(
   label: 'Sporthalle EVS',
 );
 
-/// One-off event location: Porsche.
+/// One-time event location: Porsche.
 const porscheLocation = Location(
   lat: 51.40619918755847,
   lon: 12.2973937917706,
