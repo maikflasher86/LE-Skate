@@ -343,6 +343,9 @@ class ForecastService implements ForecastRepository {
         
         ## Weitere Faktoren
         Berücksichtige Wind und Temperatur zusätzlich zu Regen in Score und Begründung.
+
+        ## Zahlenformat
+        Runde alle Werte wie Temperaturen, Windgeschwindigkeiten und ähnliche Messwerte in deiner Ausgabe (z.B. im Feld "reason") stets auf ganze Zahlen (keine Nachkommastellen).
         """;
 
       // Gemini's generateContent endpoint: model + API key are part of the
