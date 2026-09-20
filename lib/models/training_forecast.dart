@@ -16,6 +16,7 @@ class TrainingForecast {
     required this.weather,
     this.dwdPoints = const [],
     this.precipitation15mPoints = const [],
+    this.isIndoor = false,
   });
 
   factory TrainingForecast.fromJson(Map<String, dynamic> json) {
@@ -42,6 +43,7 @@ class TrainingForecast {
               .cast<Map<String, dynamic>>()
               .map(Precipitation15mPoint.fromJson)
               .toList(),
+      isIndoor: json['is_indoor'] as bool? ?? false,
     );
   }
 
@@ -61,4 +63,8 @@ class TrainingForecast {
 
   /// Open-Meteo precipitation in 15-minute resolution around training time.
   final List<Precipitation15mPoint> precipitation15mPoints;
+
+  /// Indoor training (e.g. sports hall): weather is irrelevant for it, so no
+  /// forecast was fetched or evaluated; only day/time should be shown.
+  final bool isIndoor;
 }

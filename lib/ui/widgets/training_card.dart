@@ -55,6 +55,8 @@ class TrainingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (training.isIndoor) return _buildIndoorCard(context);
+
     final weather = training.weather;
     final recommendation = training.recommendation?.trim();
     final hasRecommendation =
@@ -344,6 +346,95 @@ class TrainingCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Simplified card for indoor trainings: weather is irrelevant, so only
+  /// day/time (and no score, reason, or forecast) are shown.
+  Widget _buildIndoorCard(BuildContext context) {
+    const accent = Color(0xFF60A5FA);
+    return Material(
+      color: Colors.transparent,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.055),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+            ),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Container(
+                    width: 5,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [accent, accent.withValues(alpha: 0.45)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(20),
+                        bottomLeft: Radius.circular(20),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 13, 13, 13),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                training.title,
+                                style: const TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.3,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _Pill(
+                                label: training.trainingName,
+                                icon: Icons.home_work_rounded,
+                                color: accent,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${DateFormat('dd.MM.yyyy HH:mm').format(training.start)} – '
+                            '${DateFormat('HH:mm').format(training.end)} Uhr',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white.withValues(alpha: 0.48),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Indoor-Training – kein Wetterbezug.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.65),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

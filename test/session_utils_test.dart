@@ -65,5 +65,46 @@ void main() {
         expect(locations, isNotEmpty);
       },
     );
+
+    test(
+      'excludes the indoor Saturday sports-hall location in winter',
+      () {
+        final winterDate = DateTime(2026, 11, 15);
+        final locations = locationsForActiveDays({2, 6}, now: winterDate);
+
+        expect(locations.keys, contains('Landauer Brücke'));
+        expect(locations.keys, isNot(contains('Sporthalle EVS')));
+      },
+    );
+  });
+
+  group('forecastDaysPerLocation', () {
+    test('does not request weather for the indoor Saturday location', () async {
+      final winterDate = DateTime(2026, 11, 15);
+      final result = await forecastDaysPerLocation({2, 6}, now: winterDate);
+
+      expect(result.keys, isNot(contains('Sporthalle EVS')));
+      expect(result.keys, contains('Landauer Brücke'));
+    });
+  });
+
+  group('nextSessions (winter)', () {
+    test(
+      'marks the Tuesday outdoor training as non-indoor and Saturday sports-hall training as indoor',
+      () async {
+        final winterDate = DateTime(2026, 11, 16); // Monday
+        final sessions = await nextSessions(
+          winterDate,
+          activeDays: {2, 6},
+          maxCount: 5,
+        );
+
+        final tuesday = sessions.firstWhere((s) => s.start.weekday == 2);
+        final saturday = sessions.firstWhere((s) => s.start.weekday == 6);
+
+        expect(tuesday.isIndoor, isFalse);
+        expect(saturday.isIndoor, isTrue);
+      },
+    );
   });
 }

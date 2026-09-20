@@ -20,6 +20,7 @@ class TrainingSession {
     required this.start,
     required this.end,
     required this.location,
+    this.isIndoor = false,
   });
 
   final String id;
@@ -28,4 +29,7 @@ class TrainingSession {
   final DateTime start;
   final DateTime end;
   final Location location;
+
+  /// Indoor training (e.g. sports hall): weather is irrelevant for it.
+  final bool isIndoor;
 }

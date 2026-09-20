@@ -137,7 +137,8 @@ class ForecastService implements ForecastRepository {
             .firstOrNull;
     final location =
         (firstTraining?['location'] as Map<String, dynamic>?) ??
-        locationMap.values.first.toJson();
+        locationMap.values.firstOrNull?.toJson() ??
+        const Location(lat: 0, lon: 0, label: 'Unbekannt').toJson();
     evaluatedPayload['location'] = location;
     return ForecastResponse.fromJson(evaluatedPayload);
   }
@@ -156,6 +157,7 @@ class ForecastService implements ForecastRepository {
     final trainings = (payload['trainings'] as List<dynamic>)
         .cast<Map<String, dynamic>>();
     for (final training in trainings) {
+      if (training['is_indoor'] == true) continue;
       final locationLabel =
           (training['location'] as Map<String, dynamic>?)?['label']
               as String? ??
@@ -266,11 +268,15 @@ class ForecastService implements ForecastRepository {
     try {
       final trainings = (payload['trainings'] as List<dynamic>)
           .cast<Map<String, dynamic>>();
-      if (trainings.isEmpty) return payload;
+      // Indoor trainings have no weather data and are never evaluated.
+      final outdoorTrainings = trainings
+          .where((entry) => entry['is_indoor'] != true)
+          .toList();
+      if (outdoorTrainings.isEmpty) return payload;
 
       final userPrompt = {
         'rain_history_24h': payload['rain_history_24h'] ?? [],
-        'trainings': trainings.map((entry) {
+        'trainings': outdoorTrainings.map((entry) {
           final start = DateTime.parse(entry['start'] as String).toLocal();
           final end = DateTime.parse(entry['end'] as String).toLocal();
           String fmt(DateTime t) =>

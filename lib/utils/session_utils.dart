@@ -44,6 +44,11 @@ typedef _ScheduleEntry = ({
   /// How many days ahead weather data is needed for this weekday.
   /// Used to limit API requests (e.g. 1 for Cossi = only today needed).
   int forecastDays,
+
+  /// Whether this training happens indoors (e.g. sports hall), in which
+  /// case weather has no bearing on the training and is not fetched or
+  /// evaluated at all; only day/time are shown.
+  bool isIndoor,
 });
 
 /// Public display info for one weekday, used by the training-day planner.
@@ -156,6 +161,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: 'Cossi',
     forecastDays: 1, // Cossi training is always Monday – no multi-day forecast needed
+    isIndoor: false,
   ),
   2: (
     // Tuesday
@@ -169,6 +175,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: null,
     forecastDays: 8,
+    isIndoor: false,
   ),
   3: (
     // Wednesday
@@ -182,6 +189,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: 'Technik',
     forecastDays: 8,
+    isIndoor: false,
   ),
   4: (
     // Thursday
@@ -195,6 +203,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: null,
     forecastDays: 8,
+    isIndoor: false,
   ),
   5: (
     // Friday
@@ -208,6 +217,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     regularParity: WeekParity.even,
     badgeLabel: 'gerade KW',
     forecastDays: 8,
+    isIndoor: false,
   ),
   6: (
     // Saturday
@@ -221,6 +231,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: null,
     forecastDays: 8,
+    isIndoor: false,
   ),
   7: (
     // Sunday
@@ -234,6 +245,7 @@ const Map<int, _ScheduleEntry> _summerSchedule = {
     regularParity: WeekParity.odd,
     badgeLabel: 'ungerade KW',
     forecastDays: 8,
+    isIndoor: false,
   ),
 };
 
@@ -304,6 +316,7 @@ const Map<int, _ScheduleEntry> _winterSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: 'Outdoor',
     forecastDays: 8,
+    isIndoor: false,
   ),
   6: (
     // Saturday
@@ -317,6 +330,9 @@ const Map<int, _ScheduleEntry> _winterSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: 'Indoor',
     forecastDays: 8,
+    // Indoor sports hall training: weather is irrelevant, so no forecast
+    // is fetched or evaluated for this day, only day/time are shown.
+    isIndoor: true,
   ),
 };
 
@@ -407,14 +423,18 @@ Set<int> effectiveActiveDays(Set<int> activeDays, {DateTime? now}) {
 /// Returns unique [Location]s (keyed by label) used by the given active
 /// weekdays, plus the locations of any currently relevant one-time events
 /// (those are shown regardless of the active-days toggle).
+///
+/// Indoor-only trainings (see [_ScheduleEntry.isIndoor]) are excluded since
+/// weather is irrelevant for them and no forecast is fetched for their
+/// location.
 Map<String, Location> locationsForActiveDays(Set<int> activeDays, {DateTime? now}) {
   final reference = now ?? DateTime.now();
   final schedule = _scheduleFor(reference);
   final result = <String, Location>{};
   for (final day in activeDays) {
-    final loc = schedule[day]?.location;
-    if (loc != null) {
-      result[loc.label] = loc;
+    final entry = schedule[day];
+    if (entry != null && !entry.isIndoor) {
+      result[entry.location.label] = entry.location;
     }
   }
   for (final event in _relevantOneTimeEvents(reference)) {
@@ -430,7 +450,8 @@ Map<String, Location> locationsForActiveDays(Set<int> activeDays, {DateTime? now
 ///   (calendar days until the farthest session start) + 1
 /// so that Open-Meteo's `forecast_days` parameter covers every session.
 /// The [staticFallback] of the schedule entry is used when no sessions are
-/// found, and the result is always capped at 8.
+/// found, and the result is always capped at 8. Indoor sessions are skipped
+/// entirely since no forecast is fetched for them.
 Future<Map<String, int>> forecastDaysPerLocation(
   Set<int> activeDays, {
   DateTime? now,
@@ -448,6 +469,7 @@ Future<Map<String, int>> forecastDaysPerLocation(
   final result = <String, int>{};
 
   for (final session in sessions) {
+    if (session.isIndoor) continue;
     final label = session.location.label;
     final sessionDay = dateOnly(session.start);
     // forecast_days=1 covers today only; +1 for each extra calendar day.
@@ -460,7 +482,7 @@ Future<Map<String, int>> forecastDaysPerLocation(
   // Fallback for locations that have no upcoming sessions in the window.
   for (final day in activeDays) {
     final entry = _scheduleFor(reference)[day];
-    if (entry == null) continue;
+    if (entry == null || entry.isIndoor) continue;
     final label = entry.location.label;
     if (!result.containsKey(label)) {
       result[label] = entry.forecastDays;
@@ -527,6 +549,7 @@ Future<List<TrainingSession>> nextSessions(
         start: start,
         end: end,
         location: entry.location,
+        isIndoor: entry.isIndoor,
       ),
     );
   }

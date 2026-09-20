@@ -71,6 +71,21 @@ _LocationWeather _parseBody(String rawBody) {
 
 // ---------------------------------------------------------------------------
 
+// An empty stand-in used when no weather data at all was fetched (e.g. only
+// indoor trainings are active), so `primary` lookups never crash.
+const _LocationWeather _emptyLocationWeather = (
+  times: [],
+  temperatures: [],
+  precipitations: [],
+  rains: [],
+  precipProbabilities: [],
+  winds: [],
+  clouds: [],
+  times15m: [],
+  precipitation15m: [],
+  probability15m: [],
+);
+
 Future<Map<String, dynamic>> buildForecastPayload(
   Map<String, dynamic> input,
 ) async {
@@ -86,8 +101,11 @@ Future<Map<String, dynamic>> buildForecastPayload(
   );
 
   // First available location is used for global stats (rain history, next/last rain).
-  final primaryKey = weatherByLocation.keys.first;
-  final primary = weatherByLocation[primaryKey]!;
+  // May be empty when only indoor trainings are active (no weather fetched at all).
+  final primaryKey = weatherByLocation.keys.firstOrNull;
+  final primary = primaryKey != null
+      ? weatherByLocation[primaryKey]!
+      : _emptyLocationWeather;
 
   final now = DateTime.now();
   final oneWeekAhead = now.add(const Duration(days: 7));
@@ -111,6 +129,32 @@ Future<Map<String, dynamic>> buildForecastPayload(
   }
 
   final trainings = limitedSessions.map((session) {
+    // Indoor training (e.g. sports hall): weather is irrelevant, so no
+    // weather/evaluation is computed at all, only day/time are shown.
+    if (session.isIndoor) {
+      return {
+        'id': session.id,
+        'title': session.title,
+        'training_name': session.trainingName,
+        'start': session.start.toIso8601String(),
+        'end': session.end.toIso8601String(),
+        'location': {
+          'lat': session.location.lat,
+          'lon': session.location.lon,
+          'label': session.location.label,
+        },
+        'is_indoor': true,
+        'score': null,
+        'llm_score': null,
+        'verdict': 'Indoor',
+        'reason': '',
+        'recommendation': null,
+        'weather': null,
+        'rain_before_training': <Map<String, dynamic>>[],
+        'precipitation_15m': <Map<String, dynamic>>[],
+      };
+    }
+
     // Pick the weather data for this session's location; fall back to primary.
     final w = weatherByLocation[session.location.label] ?? primary;
 
@@ -172,6 +216,7 @@ Future<Map<String, dynamic>> buildForecastPayload(
         'lon': session.location.lon,
         'label': session.location.label,
       },
+      'is_indoor': false,
       'score': evaluation.score,
       'llm_score': null,
       'verdict': evaluation.verdict,
