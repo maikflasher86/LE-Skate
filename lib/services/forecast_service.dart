@@ -339,6 +339,7 @@ class ForecastService implements ForecastRepository {
           Kürze die Dauer notfalls auf diese Trockenphase.
         - Setze recommendation="" nur wenn: (1) verdict=go und keine sinnvolle Anpassung existiert, (2) das Zeitfenster identisch mit dem geplanten start/end ist,
           oder (3) im gesamten Suchbereich keine trockene Phase von mindestens 45 Minuten existiert.
+        - Das empfohlene Zeitfenster MUSS sich vom Feld "geplant" unterscheiden. Empfiehl niemals die geplante Zeit erneut als Verschiebung; setze dann recommendation="".
         - Wenn du eine recommendation empfiehlst, dann ergänze den Text im Feld "reason" mit einer Begründung, warum dieses Zeitfenster besser wäre.
 
         ## Begründung (Feld "reason")
