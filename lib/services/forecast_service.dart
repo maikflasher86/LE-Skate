@@ -48,7 +48,7 @@ class ForecastService implements ForecastRepository {
     // Build Open-Meteo URI for a specific location with its own forecast horizon.
     Uri openMeteoUri(Location loc) {
       final days = forecastDaysMap[loc.label] ?? 8;
-      return Uri.https('api.open-meteo.com', '/v1/forecast', {
+      final url = Uri.https('api.open-meteo.com', '/v1/forecast', {
         'latitude': '${loc.lat}',
         'longitude': '${loc.lon}',
         'hourly':
@@ -64,6 +64,9 @@ class ForecastService implements ForecastRepository {
         'forecast_days': '$days',
         'timezone': _timezone,
       });
+
+      debugPrint('[Weather] Open-Meteo URL for "${loc.label}": $url');
+      return url;
     }
 
     final locationList = locationMap.entries.toList();

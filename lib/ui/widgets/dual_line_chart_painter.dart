@@ -98,5 +98,9 @@ class DualLineChartPainter extends CustomPainter {
 (double min, double max) dualRange(List<double> s1, List<double> s2) {
   final all = [...s1, ...s2.where((v) => v.isFinite)];
   if (all.isEmpty) return (0, 1);
-  return (all.reduce(math.min), all.reduce(math.max));
+  final lo = all.reduce(math.min);
+  final hi = all.reduce(math.max);
+  // Flat data: extend upwards so the axis starts at the data value, not below it.
+  if ((hi - lo).abs() < 0.001) return (lo, lo + 1);
+  return (lo, hi);
 }

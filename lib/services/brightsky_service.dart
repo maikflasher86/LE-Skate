@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import 'package:inliner2/models/dwd_hourly_point.dart';
 import 'package:inliner2/models/location.dart';
@@ -26,6 +27,7 @@ class BrightSkyService {
       'last_date': to.toUtc().toIso8601String(),
     });
 
+    debugPrint('[Weather] DWD URL for "${location.label}": $uri');
     final response = await http
         .get(uri, headers: {'Accept': 'application/json'})
         .timeout(const Duration(seconds: 15));
