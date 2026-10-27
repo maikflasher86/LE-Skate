@@ -47,12 +47,22 @@ if ($isRelease) {
 }
 
 # $fullCmd = "flutter build $Target --dart-define-from-file=secrets.json --target-platform=android-arm64 $($obfuscationArgs -join ' ') $($ExtraArgs -join ' ')"
-$fullCmd = "flutter build $Target --dart-define-from-file=secrets.json $($obfuscationArgs -join ' ') $($ExtraArgs -join ' ')"
+$splitArgs = @()
+if ($Target -eq 'apk') {
+    $splitArgs = @('--split-per-abi')
+}
+
+$fullCmd = "flutter build $Target --dart-define-from-file=secrets.json $($splitArgs -join ' ') $($obfuscationArgs -join ' ') $($ExtraArgs -join ' ')"
 Write-Host "Running: $fullCmd" -ForegroundColor DarkGray
 
 flutter clean
-flutter build $Target --dart-define-from-file=secrets.json @obfuscationArgs @ExtraArgs
+flutter build $Target --dart-define-from-file=secrets.json @splitArgs @obfuscationArgs @ExtraArgs
+$buildExitCode = $LASTEXITCODE
 
-adb install -r "C:\Workspace\privat\wetter\inliner2\build\app\outputs\flutter-apk\app-release.apk"
+if ($buildExitCode -eq 0 -and $Target -eq 'apk') {
+    adb install -r (Join-Path $repoRoot 'build\app\outputs\flutter-apk\app-arm64-v8a-release.apk')
+}
+
+exit $buildExitCode
 
 exit $LASTEXITCODE
