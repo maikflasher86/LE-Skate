@@ -21,7 +21,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.47.0'
+          flutter-version: '3.47.8'
           cache: true
           pub-cache: true
 
@@ -51,11 +51,11 @@ jobs:
       # cedvdb/action-flutter-build-android only installs its own JDK 17 if no
       # java is found. Set up JDK 21 first so the Android build compiles against
       # Java 21 (matching sourceCompatibility/targetCompatibility in build.gradle.kts).
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
-          java-version: '21'
+          java-version: '25'
 
       - name: Create secrets.json
         uses: ./.github/actions/create-secrets
@@ -182,7 +182,7 @@ jobs:
           archive: true
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: build/web/
 
