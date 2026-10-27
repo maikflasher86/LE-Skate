@@ -422,14 +422,6 @@ class TrainingCard extends StatelessWidget {
                               color: Colors.white.withValues(alpha: 0.48),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Indoor-Training – kein Wetterbezug.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.white.withValues(alpha: 0.65),
-                            ),
-                          ),
                         ],
                       ),
                     ),
