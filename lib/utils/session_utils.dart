@@ -304,9 +304,24 @@ List<_OneTimeEvent> _relevantOneTimeEvents(
 
 /// Winter training data per weekday (last Monday of October – end of March).
 const Map<int, _ScheduleEntry> _winterSchedule = {
+  1: (
+    // Monday
+    trainingName: 'Rabet',
+    startHour: 18,
+    startMinute: 30,
+    endHour: 20,
+    endMinute: 15,
+    location: sporthalleRabetLocation,
+    category: TrainingCategory.regular,
+    regularParity: WeekParity.any,
+    badgeLabel: 'Rabet',
+    forecastDays: 8,
+    // Indoor: Athletik, Kraft, Koordination, Spiel (Eisenbahnstraße 50).
+    isIndoor: true,
+  ),
   2: (
     // Tuesday
-    trainingName: 'Outdoor',
+    trainingName: 'Landauer Brücke',
     startHour: 18,
     startMinute: 30,
     endHour: 19,
@@ -314,13 +329,27 @@ const Map<int, _ScheduleEntry> _winterSchedule = {
     location: landauerBrueckeLocation,
     category: TrainingCategory.regular,
     regularParity: WeekParity.any,
-    badgeLabel: 'Outdoor',
+    badgeLabel: 'Landauer Brücke',
+    forecastDays: 8,
+    isIndoor: false,
+  ),
+  4: (
+    // Thursday
+    trainingName: 'Völki',
+    startHour: 18,
+    startMinute: 45,
+    endHour: 20,
+    endMinute: 15,
+    location: voelkiLocation,
+    category: TrainingCategory.regular,
+    regularParity: WeekParity.any,
+    badgeLabel: 'Völki',
     forecastDays: 8,
     isIndoor: false,
   ),
   6: (
     // Saturday
-    trainingName: 'Sporthalle',
+    trainingName: 'EVS',
     startHour: 14,
     startMinute: 0,
     endHour: 16,
@@ -328,7 +357,7 @@ const Map<int, _ScheduleEntry> _winterSchedule = {
     location: sporthalleEvsLocation,
     category: TrainingCategory.regular,
     regularParity: WeekParity.any,
-    badgeLabel: 'Indoor',
+    badgeLabel: 'EVS',
     forecastDays: 8,
     // Indoor sports hall training: weather is irrelevant, so no forecast
     // is fetched or evaluated for this day, only day/time are shown.

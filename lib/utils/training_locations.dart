@@ -32,6 +32,20 @@ const sporthalleEvsLocation = Location(
   label: 'Sporthalle EVS',
 );
 
+/// Indoor hall "Rabet" for winter Monday training.
+const sporthalleRabetLocation = Location(
+  lat: 51.3444,
+  lon: 12.4046,
+  label: 'Sporthalle Rabet',
+);
+
+/// Outdoor stair training at the Völkerschlachtdenkmal (winter Thursday).
+const voelkiLocation = Location(
+  lat: 51.3138,
+  lon: 12.4135,
+  label: 'Völki',
+);
+
 /// One-time event location: Porsche.
 const porscheLocation = Location(
   lat: 51.40619918755847,

@@ -32,13 +32,13 @@ void main() {
     test(
       'falls back to the winter schedule when stored days are summer-only',
       () {
-        // Mid-November: winter season, whose schedule only defines
-        // Tuesday (2) and Saturday (6). The summer default {1, 3, 5, 7}
-        // doesn't match any winter day at all.
+        // Mid-November: winter season, whose schedule defines Monday (1),
+        // Tuesday (2), Thursday (4) and Saturday (6). The summer-only days
+        // {3, 5, 7} don't match any winter day at all.
         final winterDate = DateTime(2026, 11, 15);
-        final result = effectiveActiveDays({1, 3, 5, 7}, now: winterDate);
+        final result = effectiveActiveDays({3, 5, 7}, now: winterDate);
 
-        expect(result, {2, 6});
+        expect(result, {1, 2, 4, 6});
       },
     );
 
@@ -55,7 +55,7 @@ void main() {
       'is never empty in winter even with summer-only stored active days',
       () {
         final winterDate = DateTime(2026, 11, 15);
-        final storedActiveDays = {1, 3, 5, 7};
+        final storedActiveDays = {3, 5, 7};
         final effective = effectiveActiveDays(
           storedActiveDays,
           now: winterDate,
@@ -67,13 +67,14 @@ void main() {
     );
 
     test(
-      'excludes the indoor Saturday sports-hall location in winter',
+      'excludes the indoor sports-hall locations in winter',
       () {
         final winterDate = DateTime(2026, 11, 15);
-        final locations = locationsForActiveDays({2, 6}, now: winterDate);
+        final locations = locationsForActiveDays({1, 2, 6}, now: winterDate);
 
         expect(locations.keys, contains('Landauer Brücke'));
         expect(locations.keys, isNot(contains('Sporthalle EVS')));
+        expect(locations.keys, isNot(contains('Sporthalle Rabet')));
       },
     );
   });
