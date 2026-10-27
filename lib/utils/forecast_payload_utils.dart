@@ -256,7 +256,7 @@ Future<Map<String, dynamic>> buildForecastPayload(
     'fetched_at': now.toIso8601String(),
     'trainings': trainings,
     // Serialise all location bodies for debug purposes.
-    'raw_api_json': rawBodies[primaryKey] ?? rawBodies.values.first,
+    'raw_api_json': rawBodies[primaryKey] ?? rawBodies.values.firstOrNull ?? '',
     'rain_history_24h': rainHistory24h,
     'last_rain_event': lastRainEvent,
     'next_rain_event': nextRainEvent,
