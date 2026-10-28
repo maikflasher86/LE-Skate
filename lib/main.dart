@@ -4,8 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 // import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:inliner2/services/forecast_service.dart';
+import 'package:inliner2/ui/app_colors.dart';
 import 'package:inliner2/ui/pages/forecast_page.dart';
-import 'package:inliner2/utils/session_utils.dart';
+import 'package:inliner2/utils/date_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +31,7 @@ class InlinerWeatherApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF3B7BFF),
+          seedColor: brandBlue,
           brightness: Brightness.dark,
         ),
         textTheme: const TextTheme(
@@ -83,14 +84,14 @@ class InlinerWeatherApp extends StatelessWidget {
       // the remaining screen width with the app background color.
       builder: (kIsWeb || Platform.isWindows)
           ? (context, child) => ColoredBox(
-                color: const Color(0xFF060D1F),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 700),
-                    child: child,
-                  ),
+              color: backgroundTop,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: child,
                 ),
-              )
+              ),
+            )
           : null,
     );
   }

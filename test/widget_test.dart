@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -7,6 +8,9 @@ import 'package:inliner2/models/location.dart';
 import 'package:inliner2/models/training_forecast.dart';
 import 'package:inliner2/models/weather_metrics.dart';
 import 'package:inliner2/services/forecast_service.dart';
+import 'package:inliner2/ui/widgets/score_badge.dart';
+import 'package:inliner2/ui/widgets/training_card.dart';
+import 'package:inliner2/ui/widgets/training_detail_sheet.dart';
 
 void main() {
   testWidgets('displays forecast header and training card', (
@@ -60,6 +64,75 @@ void main() {
     // llmScore is null → badge shows '–', reason is displayed in text
     expect(find.text('–'), findsOneWidget);
     expect(find.textContaining('Fahrbahn nass'), findsOneWidget);
+  });
+
+  testWidgets('renders an indoor training card without score', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: TrainingCard(
+            training: TrainingForecast(
+              id: 'day6_2026-11-21',
+              title: 'Samstag',
+              trainingName: 'EVS',
+              start: DateTime(2026, 11, 21, 14, 0),
+              end: DateTime(2026, 11, 21, 16, 0),
+              llmScore: null,
+              verdict: 'Indoor',
+              reason: '',
+              weather: null,
+              isIndoor: true,
+            ),
+            rawApiJson: '',
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Samstag'), findsOneWidget);
+    expect(find.text('EVS'), findsOneWidget);
+    expect(find.text('21.11.2026 14:00 – 16:00 Uhr'), findsOneWidget);
+    expect(find.byType(ScoreBadge), findsNothing);
+    expect(find.text('Details & Diagramme'), findsNothing);
+  });
+
+  testWidgets('tapping a training card opens the detail sheet', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await tester.pumpWidget(
+      InlinerWeatherApp(service: _FakeForecastRepository()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TrainingDetailSheet), findsNothing);
+
+    await tester.tap(find.text('Sonntag Session'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TrainingDetailSheet), findsOneWidget);
+    expect(find.text('BEWERTUNG'), findsOneWidget);
+    expect(find.text('KI-Bewertung'), findsOneWidget);
+    expect(find.text('BEGRÜNDUNG'), findsOneWidget);
+    expect(find.text('WETTER IM TRAININGSZEITRAUM'), findsOneWidget);
+    // The fake has no raw Open-Meteo JSON, so no hourly charts are available.
+    final hint = find.text(
+      'Stundendaten für diesen Termin noch nicht verfügbar.',
+    );
+    await tester.scrollUntilVisible(
+      hint,
+      200,
+      scrollable: find
+          .descendant(
+            of: find.byType(TrainingDetailSheet),
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    expect(hint, findsOneWidget);
   });
 }
 

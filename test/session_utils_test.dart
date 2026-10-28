@@ -1,7 +1,46 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inliner2/models/training_forecast.dart';
+import 'package:inliner2/utils/season_utils.dart';
 import 'package:inliner2/utils/session_utils.dart';
 
+TrainingForecast _training(String id, DateTime start) => TrainingForecast(
+  id: id,
+  title: id,
+  trainingName: id,
+  start: start,
+  end: start.add(const Duration(hours: 2)),
+  llmScore: null,
+  verdict: 'Go',
+  reason: '',
+  weather: null,
+);
+
 void main() {
+  group('visibleTrainings', () {
+    final regular = _training('day7_2026-07-05', DateTime(2026, 7, 5, 10));
+    final alternative = _training('day5_2026-07-17', DateTime(2026, 7, 17, 19));
+    final event = _training('event_2026-07-17_X', DateTime(2026, 7, 17, 19));
+
+    test('precondition: the odd-week Friday is an alternative date', () {
+      expect(isAlternativeTrainingDate(alternative.start), isTrue);
+      expect(isAlternativeTrainingDate(regular.start), isFalse);
+    });
+
+    test('hides alternatives but keeps one-time events', () {
+      expect(
+        visibleTrainings([regular, alternative, event], showAlternatives: false),
+        [regular, event],
+      );
+    });
+
+    test('shows everything when alternatives are enabled', () {
+      expect(
+        visibleTrainings([regular, alternative, event], showAlternatives: true),
+        [regular, alternative, event],
+      );
+    });
+  });
+
   group('nextSessions', () {
     test(
       'suppresses the regular weekday training on a day with a one-time event',

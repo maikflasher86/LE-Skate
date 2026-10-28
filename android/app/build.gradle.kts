@@ -1,3 +1,4 @@
+import com.android.build.api.variant.FilterConfiguration
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Properties
@@ -118,9 +119,13 @@ android {
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { output ->
+            val abi = output.filters
+                .find { it.filterType == FilterConfiguration.FilterType.ABI }
+                ?.identifier
+            val abiSuffix = abi?.let { "-$it" } ?: ""
             output.outputFileName.set(
                 output.versionName.map { versionName ->
-                    "LE_Skate_${versionName}-${variant.buildType}.apk"
+                    "LE_Skate_${versionName}${abiSuffix}-${variant.buildType}.apk"
                 }
             )
         }

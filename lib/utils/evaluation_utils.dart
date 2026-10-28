@@ -1,4 +1,5 @@
 import 'package:inliner2/models/evaluation.dart';
+import 'package:inliner2/models/hourly_point.dart';
 import 'dart:math' show max;
 
 Evaluation evaluate(Map<String, double>? metrics) {
@@ -67,52 +68,42 @@ Evaluation evaluate(Map<String, double>? metrics) {
   );
 }
 
-Map<String, double>? aggregateMetrics({
-  required List<String> times,
-  required List<double> temperatures,
-  required List<double> precipitations,
-  required List<double> rains,
-  required List<double> precipitationProbabilities,
-  required List<double> winds,
-  required List<double> clouds,
+/// Aggregates the [points] within [start, end) into the payload metrics map,
+/// or returns null when no point lies in that window.
+Map<String, double>? aggregateMetrics(
+  List<HourlyPoint> points, {
   required DateTime start,
   required DateTime end,
 }) {
-  final indices = <int>[];
-  for (var i = 0; i < times.length; i++) {
-    final point = DateTime.parse(times[i]).toLocal();
-    if ((point.isAtSameMomentAs(start) || point.isAfter(start)) &&
-        point.isBefore(end)) {
-      indices.add(i);
-    }
-  }
+  final selected = points
+      .where((p) => !p.time.isBefore(start) && p.time.isBefore(end))
+      .toList();
 
-  if (indices.isEmpty) {
+  if (selected.isEmpty) {
     return null;
   }
 
-  double avg(List<double> values) {
-    final selected = indices.map((index) => values[index]).toList();
-    return selected.reduce((a, b) => a + b) / selected.length;
-  }
+  double avg(double Function(HourlyPoint) value) =>
+      selected.map(value).reduce((a, b) => a + b) / selected.length;
 
-  double peak(List<double> values) {
-    final selected = indices.map((index) => values[index]).toList();
-    return selected.reduce((a, b) => a > b ? a : b);
-  }
+  double peak(double Function(HourlyPoint) value) =>
+      selected.map(value).reduce((a, b) => a > b ? a : b);
 
+  final peakRain = peak((p) => p.rainMm);
   return {
-    'temperature_c': double.parse(avg(temperatures).toStringAsFixed(2)),
-    'wind_kmh': double.parse(avg(winds).toStringAsFixed(2)),
+    'temperature_c': double.parse(avg((p) => p.temperatureC).toStringAsFixed(2)),
+    'wind_kmh': double.parse(avg((p) => p.windKmh).toStringAsFixed(2)),
     // Peak instead of average, so short rain in slot doesn't get smoothed out.
     // Use max from precipitation and rain for best accuracy
     'precipitation_mm': double.parse(
-      max(peak(precipitations), peak(rains)).toStringAsFixed(2),
+      max(peak((p) => p.precipitationMm), peakRain).toStringAsFixed(2),
     ),
-    'rain_mm': double.parse(peak(rains).toStringAsFixed(2)),
+    'rain_mm': double.parse(peakRain.toStringAsFixed(2)),
     'precipitation_probability_percent': double.parse(
-      peak(precipitationProbabilities).toStringAsFixed(2),
+      peak((p) => p.precipitationProbabilityPercent).toStringAsFixed(2),
     ),
-    'cloud_cover_percent': double.parse(avg(clouds).toStringAsFixed(2)),
+    'cloud_cover_percent': double.parse(
+      avg((p) => p.cloudCoverPercent).toStringAsFixed(2),
+    ),
   };
 }

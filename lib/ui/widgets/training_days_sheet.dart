@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:inliner2/services/training_settings_service.dart';
+import 'package:inliner2/ui/app_colors.dart';
+import 'package:inliner2/ui/widgets/sheet_scaffold.dart';
+import 'package:inliner2/utils/date_utils.dart';
+import 'package:inliner2/utils/season_utils.dart';
 import 'package:inliner2/utils/session_utils.dart';
+import 'package:inliner2/utils/training_schedule.dart';
 
 /// Bottom sheet for selecting active training days.
 class TrainingDaysSheet extends StatefulWidget {
@@ -15,22 +20,38 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
   bool _loading = true;
   bool _showAlternatives = TrainingSettingsService.defaultShowAlternatives;
 
+  /// Saves still in flight; awaited before the sheet is closed so the
+  /// reload triggered by closing sees the latest settings.
+  final List<Future<void>> _pendingSaves = [];
+
   // Day list is derived from the central schedule map – no duplication needed.
 
   @override
   void initState() {
     super.initState();
-    Future.wait([
-      TrainingSettingsService.loadActiveDays(),
-      TrainingSettingsService.loadShowAlternatives(),
-    ]).then((results) {
-      if (!mounted) return;
-      setState(() {
-        _activeDays = results[0] as Set<int>;
-        _showAlternatives = results[1] as bool;
-        _loading = false;
-      });
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    var activeDays = TrainingSettingsService.defaultDaysFor(DateTime.now());
+    var showAlternatives = TrainingSettingsService.defaultShowAlternatives;
+    try {
+      activeDays = await TrainingSettingsService.loadActiveDays();
+      showAlternatives = await TrainingSettingsService.loadShowAlternatives();
+    } catch (_) {
+      // Fall back to the defaults so the sheet stays usable.
+    }
+    if (!mounted) return;
+    setState(() {
+      _activeDays = activeDays;
+      _showAlternatives = showAlternatives;
+      _loading = false;
     });
+  }
+
+  Future<void> _track(Future<void> save) {
+    _pendingSaves.add(save);
+    return save.whenComplete(() => _pendingSaves.remove(save));
   }
 
   Future<void> _toggle(int day, bool active) async {
@@ -41,12 +62,23 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
       next.remove(day);
     }
     setState(() => _activeDays = next);
-    await TrainingSettingsService.saveActiveDays(next);
+    await _track(TrainingSettingsService.saveActiveDays(next));
   }
 
   Future<void> _toggleAlternatives(bool value) async {
     setState(() => _showAlternatives = value);
-    await TrainingSettingsService.saveShowAlternatives(value);
+    await _track(TrainingSettingsService.saveShowAlternatives(value));
+  }
+
+  Future<void> _applyAndClose() async {
+    try {
+      await Future.wait(List.of(_pendingSaves));
+    } catch (_) {
+      // A failed save must not keep the sheet open; the reload uses
+      // whatever was stored.
+    }
+    if (!mounted) return;
+    Navigator.of(context).pop(true);
   }
 
   @override
@@ -63,31 +95,12 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
+          const SheetDragHandle(),
           const SizedBox(height: 16),
-          const Text(
-            'Trainingstage',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
+          const SheetTitle('Trainingstage'),
           const SizedBox(height: 16),
           if (_loading)
-            const Center(
-              child: CircularProgressIndicator(color: Color(0xFF3B7BFF)),
-            )
+            const Center(child: CircularProgressIndicator(color: brandBlue))
           else
             for (final info in scheduleDayInfoList())
               _DayRow(
@@ -106,7 +119,7 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
               contentPadding: EdgeInsets.zero,
               value: _showAlternatives,
               onChanged: _toggleAlternatives,
-              activeThumbColor: const Color(0xFF3B7BFF),
+              activeThumbColor: brandBlue,
               title: const Text(
                 'Alternative Trainings anzeigen',
                 style: TextStyle(
@@ -125,10 +138,8 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
           SizedBox(
             width: double.infinity,
             child: FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF3B7BFF),
-              ),
+              onPressed: _applyAndClose,
+              style: FilledButton.styleFrom(backgroundColor: brandBlue),
               child: const Text('Übernehmen & neu laden'),
             ),
           ),
@@ -184,7 +195,7 @@ class _DayRow extends StatelessWidget {
               child: Checkbox(
                 value: active,
                 onChanged: (v) => onChanged(v ?? false),
-                activeColor: const Color(0xFF3B7BFF),
+                activeColor: brandBlue,
                 side: const BorderSide(color: Colors.white38),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4),
@@ -216,9 +227,7 @@ class _DayRow extends StatelessWidget {
                 ],
                 _ColorBox(
                   label: time,
-                  color: _isWeekend
-                      ? const Color(0xFF22C55E)
-                      : const Color(0xFF3B7BFF),
+                  color: _isWeekend ? accentGreen : brandBlue,
                   active: active,
                 ),
               ],

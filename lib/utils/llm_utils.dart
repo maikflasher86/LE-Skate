@@ -1,6 +1,13 @@
 import 'dart:convert';
 
-import 'package:inliner2/utils/format_utils.dart';
+String? _extractJsonObject(String content) {
+  final start = content.indexOf('{');
+  final end = content.lastIndexOf('}');
+  if (start < 0 || end <= start) {
+    return null;
+  }
+  return content.substring(start, end + 1);
+}
 
 Map<String, dynamic> mergeLlmEvaluationsInPayload(Map<String, dynamic> input) {
   final payload = Map<String, dynamic>.from(
@@ -29,7 +36,7 @@ Map<String, dynamic> mergeLlmEvaluationsInPayload(Map<String, dynamic> input) {
     return payload;
   }
 
-  final jsonContent = extractJsonObject(content);
+  final jsonContent = _extractJsonObject(content);
   if (jsonContent == null) {
     return payload;
   }

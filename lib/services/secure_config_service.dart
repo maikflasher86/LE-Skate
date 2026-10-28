@@ -17,7 +17,8 @@ class SecureConfigService {
 
   static const _llmApiKeyStorageKey = 'llm_api_key';
 
-  /// Compile-time fallback, only used to seed secure storage on first run.
+  /// Compile-time value passed via `--dart-define`. When set, it takes
+  /// precedence and is synced into secure storage on every start.
   static const String _defaultLlmApiKey = String.fromEnvironment(
     'LLM_API_KEY',
     defaultValue: '',
@@ -40,15 +41,5 @@ class SecureConfigService {
     }
 
     return await _storage.read(key: _llmApiKeyStorageKey) ?? '';
-  }
-
-  /// Overwrites the stored LLM API key (e.g. from a settings screen).
-  static Future<void> setLlmApiKey(String value) async {
-    await _storage.write(key: _llmApiKeyStorageKey, value: value);
-  }
-
-  /// Removes the stored LLM API key.
-  static Future<void> clearLlmApiKey() async {
-    await _storage.delete(key: _llmApiKeyStorageKey);
   }
 }

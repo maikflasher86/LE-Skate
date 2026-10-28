@@ -1,13 +1,16 @@
 import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:inliner2/models/forecast_response.dart';
-import 'package:inliner2/ui/pages/about_page.dart';
+import 'package:inliner2/ui/app_colors.dart';
+import 'package:inliner2/ui/widgets/about_sheet.dart';
+import 'package:inliner2/ui/widgets/app_logo.dart';
 import 'package:inliner2/ui/widgets/rain_radar_sheet.dart';
+import 'package:inliner2/ui/widgets/sheet_scaffold.dart';
 import 'package:inliner2/ui/widgets/training_days_sheet.dart';
 import 'package:inliner2/utils/date_utils.dart';
-import 'package:inliner2/utils/format_utils.dart';
-import 'package:intl/intl.dart';
+import 'package:inliner2/utils/rain_info_utils.dart';
 
 class HeaderCard extends StatelessWidget {
   const HeaderCard({super.key, required this.response, required this.onReload});
@@ -28,14 +31,9 @@ class HeaderCard extends StatelessWidget {
   }
 
   void _showTrainingDays(BuildContext context) async {
-    final reload = await showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0B1A3E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => const TrainingDaysSheet(),
+    final reload = await showAppSheet<bool>(
+      context,
+      (_) => const TrainingDaysSheet(),
     );
     if (reload == true) onReload();
   }
@@ -44,18 +42,13 @@ class HeaderCard extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0B1A3E),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+    showAppSheet<void>(
+      context,
+      (_) => const AboutSheet(),
       constraints: BoxConstraints(
         maxHeight: isLandscape ? screenHeight * 0.92 : screenHeight * 0.6,
         maxWidth: isLandscape ? 520 : double.infinity,
       ),
-      builder: (_) => const AboutSheet(),
     );
   }
 
@@ -77,57 +70,7 @@ class HeaderCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFF3B7BFF,
-                              ).withValues(alpha: 0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipOval(
-                          child: Image.asset(
-                            'assets/images/app_icon.png',
-                            width: 52,
-                            height: 52,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'LE Skate',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              formatDateTime(response.fetchedAt),
-                              style: const TextStyle(
-                                color: Colors.white54,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                  _Brand(fetchedAt: response.fetchedAt),
                   const SizedBox(height: 10),
                   _LastRainInfo(
                     lastEvent: response.lastRainEvent,
@@ -138,43 +81,104 @@ class HeaderCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             // ── Right side: Buttons vertically centered + info above ──
-            Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                GestureDetector(
-                  onTap: () => _showImpressum(context),
-                  child: const Icon(
-                    Icons.info_outline,
-                    size: 16,
-                    color: Colors.white30,
-                  ),
-                ),
-                SizedBox(
-                  width: 105,
-                  child: Column(
-                    children: [
-                      if (!kIsWeb && (Platform.isAndroid || Platform.isIOS))
-                        _CompactActionButton(
-                          icon: Icons.satellite_alt_rounded,
-                          label: 'Regenradar',
-                          onTap: () => _showRainRadar(context),
-                        ),
-                        const SizedBox(height: 4),
-                      _CompactActionButton(
-                        icon: Icons.calendar_month_rounded,
-                        label: 'Wochentage',
-                        onTap: () => _showTrainingDays(context),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 0), // Spacer bottom for symmetry
-              ],
+            _ActionColumn(
+              onInfo: () => _showImpressum(context),
+              onRainRadar: () => _showRainRadar(context),
+              onTrainingDays: () => _showTrainingDays(context),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Logo, app name and fetch time.
+class _Brand extends StatelessWidget {
+  const _Brand({required this.fetchedAt});
+
+  final DateTime fetchedAt;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const AppLogo(
+          size: 52,
+          asset: 'assets/images/app_icon.png',
+          glowBlur: 12,
+          glowOffsetY: 4,
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'LE Skate',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                overflow: TextOverflow.ellipsis,
+              ),
+              Text(
+                formatDateTime(fetchedAt),
+                style: const TextStyle(color: Colors.white54, fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Info icon at the top, action buttons vertically centered.
+class _ActionColumn extends StatelessWidget {
+  const _ActionColumn({
+    required this.onInfo,
+    required this.onRainRadar,
+    required this.onTrainingDays,
+  });
+
+  final VoidCallback onInfo;
+  final VoidCallback onRainRadar;
+  final VoidCallback onTrainingDays;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        GestureDetector(
+          onTap: onInfo,
+          child: const Icon(
+            Icons.info_outline,
+            size: 16,
+            color: Colors.white30,
+          ),
+        ),
+        SizedBox(
+          width: 105,
+          child: Column(
+            children: [
+              if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) ...[
+                _CompactActionButton(
+                  icon: Icons.satellite_alt_rounded,
+                  label: 'Regenradar',
+                  onTap: onRainRadar,
+                ),
+                const SizedBox(height: 4),
+              ],
+              _CompactActionButton(
+                icon: Icons.calendar_month_rounded,
+                label: 'Wochentage',
+                onTap: onTrainingDays,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 0), // Spacer bottom for symmetry
+      ],
     );
   }
 }
@@ -185,55 +189,22 @@ class _LastRainInfo extends StatelessWidget {
   final LastRainEvent? lastEvent;
   final LastRainEvent? nextEvent;
 
-  String _formatRainTime(DateTime time) {
-    final now = DateTime.now();
-    final today = dateOnly(now);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final tomorrow = today.add(const Duration(days: 1));
-    final eventDay = dateOnly(time);
-    final timeStr = DateFormat('HH:mm').format(time);
-    if (eventDay == today) return 'heute $timeStr Uhr';
-    if (eventDay == yesterday) return 'gestern $timeStr Uhr';
-    if (eventDay == tomorrow) return 'morgen $timeStr Uhr';
-    return '${DateFormat('dd.MM.').format(time)} $timeStr Uhr';
-  }
-
-  String _intensity(double rainMm) => rainMm < 0.5
-      ? 'leichter Regen'
-      : rainMm < 2.0
-      ? 'mäßiger Regen'
-      : 'starker Regen';
-
-  String _details(LastRainEvent event) {
-    final intensity =
-        '${_intensity(event.rainMm)} (${event.rainMm.toStringAsFixed(1)} mm/h)';
-    return event.source == null ? intensity : '$intensity · ${event.source}';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final nowUtc = DateTime.now().toUtc();
-    // At render time re-check – UTC comparison avoids timezone bugs
-    final validLast =
-        lastEvent != null &&
-            lastEvent!.time.toUtc().isBefore(nowUtc) &&
-            nowUtc.difference(lastEvent!.time.toUtc()).inHours <= 24
-        ? lastEvent
-        : null;
-    final validNext =
-        nextEvent != null && nextEvent!.time.toUtc().isAfter(nowUtc)
-        ? nextEvent
-        : null;
+    // Re-checked at render time.
+    final now = DateTime.now();
+    final validLast = validLastRainEvent(lastEvent, now: now);
+    final validNext = validNextRainEvent(nextEvent, now: now);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Source badge
-        Row(
+        const Row(
           children: [
-            const Icon(Icons.cloud_outlined, size: 11, color: Colors.white38),
-            const SizedBox(width: 4),
-            const Flexible(
+            Icon(Icons.cloud_outlined, size: 11, color: Colors.white38),
+            SizedBox(width: 4),
+            Flexible(
               child: Text(
                 'DWD via BrightSky & Open-Meteo',
                 style: TextStyle(fontSize: 10, color: Colors.white38),
@@ -243,62 +214,62 @@ class _LastRainInfo extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 6),
-        // Last rain
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 1),
-              child: Icon(Icons.history, size: 14, color: Colors.white54),
-            ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: validLast == null
-                  ? const Text(
-                      'Kein Regen in den letzten 24h',
-                      style: TextStyle(fontSize: 13, color: Colors.white38),
-                    )
-                  : Text(
-                      'Zuletzt: ${_formatRainTime(validLast.time)}\n'
-                      '${_details(validLast)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white54,
-                      ),
-                    ),
-            ),
-          ],
+        _RainRow(
+          icon: Icons.history,
+          color: Colors.white54,
+          text: validLast == null
+              ? null
+              : 'Zuletzt: ${formatRainTime(validLast.time, now: now)}\n'
+                    '${rainEventDetails(validLast)}',
+          emptyText: 'Kein Regen in den letzten 24h',
         ),
         const SizedBox(height: 4),
-        // Next rain
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(top: 1),
-              child: Icon(
-                Icons.water_drop,
-                size: 14,
-                color: Colors.lightBlueAccent,
-              ),
+        _RainRow(
+          icon: Icons.water_drop,
+          color: Colors.lightBlueAccent,
+          text: validNext == null
+              ? null
+              : 'Nächster Regen: ${formatRainTime(validNext.time, now: now)}\n'
+                    '${rainEventDetails(validNext)}',
+          emptyText: 'Kein Regen in der Vorhersage',
+        ),
+      ],
+    );
+  }
+}
+
+/// Icon plus rain text; shows the muted [emptyText] if [text] is null.
+class _RainRow extends StatelessWidget {
+  const _RainRow({
+    required this.icon,
+    required this.color,
+    required this.text,
+    required this.emptyText,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String? text;
+  final String emptyText;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 1),
+          child: Icon(icon, size: 14, color: color),
+        ),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text ?? emptyText,
+            style: TextStyle(
+              fontSize: 13,
+              color: text == null ? Colors.white38 : color,
             ),
-            const SizedBox(width: 6),
-            Expanded(
-              child: validNext == null
-                  ? const Text(
-                      'Kein Regen in der Vorhersage',
-                      style: TextStyle(fontSize: 13, color: Colors.white38),
-                    )
-                  : Text(
-                      'Nächster Regen: ${_formatRainTime(validNext.time)}\n'
-                      '${_details(validNext)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.lightBlueAccent,
-                      ),
-                    ),
-            ),
-          ],
+          ),
         ),
       ],
     );
@@ -326,16 +297,14 @@ class _CompactActionButton extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF3B7BFF).withValues(alpha: 0.20),
+              brandBlue.withValues(alpha: 0.20),
               const Color(0xFF1A3A8F).withValues(alpha: 0.18),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: const Color(0xFF3B7BFF).withValues(alpha: 0.45),
-          ),
+          border: Border.all(color: brandBlue.withValues(alpha: 0.45)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

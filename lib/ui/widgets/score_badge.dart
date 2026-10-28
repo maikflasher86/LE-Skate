@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:inliner2/ui/widgets/verdict_colors.dart';
+import 'package:inliner2/ui/app_colors.dart';
 
 class ScoreBadge extends StatelessWidget {
   const ScoreBadge({super.key, required this.score, required this.verdict});
