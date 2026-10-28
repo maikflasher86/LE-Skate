@@ -66,17 +66,20 @@ jobs:
           pub-cache: true
 
       # android/app/build.gradle.kts uses flutter.ndkVersion; read it from the
-      # Flutter SDK so the cache key follows Flutter upgrades.
+      # Flutter SDK so the cache key follows Flutter upgrades. The env context
+      # does not contain runner variables such as ANDROID_HOME, so expose the
+      # cache path as a step output.
       - name: Read NDK version
         id: ndk
         run: |
           version=$(grep -oP 'val ndkVersion: String = "\K[^"]+' "$FLUTTER_ROOT/packages/flutter_tools/gradle/src/main/kotlin/FlutterExtension.kt")
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "path=$ANDROID_HOME/ndk/$version" >> "$GITHUB_OUTPUT"
 
       - name: Cache Android NDK
         uses: actions/cache@v5
         with:
-          path: ${{ env.ANDROID_HOME }}/ndk/${{ steps.ndk.outputs.version }}
+          path: ${{ steps.ndk.outputs.path }}
           key: android-ndk-${{ runner.os }}-${{ steps.ndk.outputs.version }}
 
       - name: Create secrets.json
