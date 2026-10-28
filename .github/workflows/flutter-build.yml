@@ -115,7 +115,7 @@ jobs:
       - name: Archive APK
         uses: actions/upload-artifact@v7
         with:
-          name: LE-Skate-Android-arm64-Release-${{ steps.app_version.outputs.version }}
+          name: LE-Skate-Android-Release-${{ steps.app_version.outputs.version }}
           path: build/app/outputs/apk/release/*.apk
           archive: true
 
