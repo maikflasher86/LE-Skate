@@ -3,6 +3,23 @@ name: Flutter Build
 on:
   push:
   workflow_dispatch:
+    inputs:
+      build_web:
+        description: Build Web
+        type: boolean
+        default: true
+      build_android:
+        description: Build Android
+        type: boolean
+        default: true
+      build_windows:
+        description: Build Windows
+        type: boolean
+        default: false
+      build_ios:
+        description: Build iOS
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -42,6 +59,7 @@ jobs:
 
   build-android:
     needs: test
+    if: github.event_name != 'workflow_dispatch' || inputs.build_android
     runs-on: ubuntu-latest
     #    strategy:
     #      fail-fast: true
@@ -124,7 +142,7 @@ jobs:
 
   build-windows:
     needs: test
-    if: false
+    if: github.event_name == 'workflow_dispatch' && inputs.build_windows
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
@@ -169,6 +187,7 @@ jobs:
 
   build-web:
     needs: test
+    if: github.event_name != 'workflow_dispatch' || inputs.build_web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -236,7 +255,7 @@ jobs:
 
   build-ios:
     needs: test
-    if: false
+    if: github.event_name == 'workflow_dispatch' && inputs.build_ios
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
