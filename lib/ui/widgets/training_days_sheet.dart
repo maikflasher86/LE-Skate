@@ -98,7 +98,7 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
                 active: _activeDays.contains(info.weekday),
                 onChanged: (v) => _toggle(info.weekday, v),
               ),
-          if (!_loading) ...[
+          if (!_loading && !isWinterSeason(DateTime.now())) ...[
             const SizedBox(height: 12),
             const Divider(color: Colors.white12, height: 1),
             const SizedBox(height: 8),
