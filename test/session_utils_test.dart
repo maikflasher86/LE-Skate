@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inliner2/models/training_forecast.dart';
-import 'package:inliner2/utils/season_utils.dart';
 import 'package:inliner2/utils/session_utils.dart';
 
 TrainingForecast _training(String id, DateTime start) => TrainingForecast(

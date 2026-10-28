@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:inliner2/models/dwd_hourly_point.dart';
-import 'package:inliner2/utils/forecast_constants.dart';
+import 'package:inliner2/utils/forecast_payload_utils.dart';
 import 'package:inliner2/utils/rain_event_utils.dart';
 
 /// Assigns per-location DWD precipitation points (pre-training window start

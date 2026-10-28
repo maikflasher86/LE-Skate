@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:inliner2/utils/season_utils.dart';
+import 'package:inliner2/utils/session_utils.dart';
 import 'package:inliner2/utils/training_schedule.dart';
 
 void main() {

@@ -7,7 +7,6 @@ import 'package:inliner2/services/brightsky_service.dart';
 import 'package:inliner2/services/llm_service.dart';
 import 'package:inliner2/services/training_settings_service.dart';
 import 'package:inliner2/utils/dwd_merge_utils.dart';
-import 'package:inliner2/utils/forecast_constants.dart';
 import 'package:inliner2/utils/forecast_payload_utils.dart';
 import 'package:inliner2/utils/session_utils.dart';
 
@@ -110,7 +109,6 @@ class ForecastService implements ForecastRepository {
     return ForecastResponse.fromJson(evaluatedPayload);
   }
 
-  /// Fetches the Open-Meteo forecast for [location] with a horizon of [days].
   Future<http.Response> _fetchOpenMeteo(Location location, int days) {
     final url = Uri.https('api.open-meteo.com', '/v1/forecast', {
       'latitude': '${location.lat}',

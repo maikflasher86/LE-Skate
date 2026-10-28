@@ -8,16 +8,7 @@ import 'package:inliner2/models/location.dart';
 enum TrainingCategory { regular, alternative, special }
 
 /// Describes in which calendar weeks a weekday is considered "regular".
-enum WeekParity {
-  /// Every week.
-  any,
-
-  /// Only odd weeks (1, 3, 5, ...).
-  odd,
-
-  /// Only even weeks (2, 4, 6, ...).
-  even,
-}
+enum WeekParity { any, odd, even }
 
 // ---------------------------------------------------------------------------
 // Locations
@@ -63,7 +54,6 @@ const voelkiLocation = Location(
   label: 'Völki',
 );
 
-/// One-time event location: Porsche.
 const porscheLocation = Location(
   lat: 51.40619918755847,
   lon: 12.2973937917706,

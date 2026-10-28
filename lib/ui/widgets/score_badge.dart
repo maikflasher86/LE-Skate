@@ -9,8 +9,6 @@ class ScoreBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // AI Score
-    const icon = Icons.auto_awesome_rounded;
     final color = verdictColor(verdict);
 
     return Container(
@@ -23,7 +21,7 @@ class ScoreBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(Icons.auto_awesome_rounded, size: 14, color: color),
           const SizedBox(width: 5),
           Text(
             score != null ? '$score' : '–',

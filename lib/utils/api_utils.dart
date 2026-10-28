@@ -1,13 +1,10 @@
 import 'dart:convert';
 
-import 'package:inliner2/models/training_forecast.dart';
-import 'package:inliner2/models/training_period_points.dart';
+import 'package:inliner2/models/hourly_point.dart';
 import 'package:inliner2/utils/parsing_utils.dart';
 
-List<TrainingPeriodPoints> extractHourlyPointsByTraining(
-  String rawJson,
-  List<TrainingForecast> trainings,
-) {
+/// Hourly points of [day] between 07:00 and 22:00, or none if fewer than two.
+List<HourlyPoint> hourlyPointsOfDay(String rawJson, DateTime day) {
   if (rawJson.isEmpty) {
     return const [];
   }
@@ -19,40 +16,15 @@ List<TrainingPeriodPoints> extractHourlyPointsByTraining(
       return const [];
     }
 
-    final allPoints = parseOpenMeteoHourly(hourly, lenient: true).points;
-    if (allPoints.isEmpty) {
-      return const [];
-    }
-
-    final result = <TrainingPeriodPoints>[];
-    for (final training in trainings) {
-      final dayStart = DateTime(
-        training.start.year,
-        training.start.month,
-        training.start.day,
-        7,
-      );
-      final dayEnd = DateTime(
-        training.start.year,
-        training.start.month,
-        training.start.day,
-        22,
-      );
-
-      final periodPoints = allPoints
-          .where(
-            (point) =>
-                !point.time.isBefore(dayStart) && point.time.isBefore(dayEnd),
-          )
-          .toList();
-      if (periodPoints.length >= 2) {
-        result.add(
-          TrainingPeriodPoints(training: training, points: periodPoints),
-        );
-      }
-    }
-
-    return result;
+    final dayStart = DateTime(day.year, day.month, day.day, 7);
+    final dayEnd = DateTime(day.year, day.month, day.day, 22);
+    final points = parseOpenMeteoHourly(hourly, lenient: true).points
+        .where(
+          (point) =>
+              !point.time.isBefore(dayStart) && point.time.isBefore(dayEnd),
+        )
+        .toList();
+    return points.length >= 2 ? points : const [];
   } catch (_) {
     return const [];
   }

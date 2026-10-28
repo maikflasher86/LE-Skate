@@ -13,7 +13,6 @@ const backgroundGradientColors = [
   backgroundBottom,
 ];
 
-/// Background of the bottom sheets.
 const sheetBackground = backgroundMiddle;
 
 const accentBlue = Color(0xFF60A5FA);
@@ -30,14 +29,12 @@ Color verdictColor(String verdict) => switch (verdict.toLowerCase()) {
   _ => accentRed,
 };
 
-/// Colour for a precipitation probability in percent.
 Color precipRiskColor(int prob) => prob >= 70
     ? accentRed
     : prob >= 40
     ? accentAmber
     : accentBlue;
 
-/// Translucent "glass" box: 5 % white fill, radius 14 and a thin border.
 BoxDecoration glassDecoration({Color? borderColor}) => BoxDecoration(
   color: Colors.white.withValues(alpha: 0.05),
   borderRadius: BorderRadius.circular(14),

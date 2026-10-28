@@ -13,7 +13,7 @@ void main() async {
   // if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) await MobileAds.instance.initialize();
   // Needed for the synchronous German weekday labels shown in the UI
   // (e.g. TrainingDaysSheet). The background isolate spawned by compute()
-  // initializes its own copy lazily, see session_utils.dart.
+  // initializes its own copy lazily, see date_utils.dart.
   await ensureGermanLocaleInitialized();
   runApp(const InlinerWeatherApp());
 }

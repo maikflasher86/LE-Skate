@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inliner2/ui/app_colors.dart';
 
-/// Round app logo with a blue glow.
 class AppLogo extends StatelessWidget {
   const AppLogo({
     super.key,

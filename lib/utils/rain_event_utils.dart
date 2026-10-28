@@ -1,4 +1,8 @@
-import 'package:inliner2/utils/forecast_constants.dart';
+/// Precipitation strictly above this amount (mm per hour) counts as rain.
+const double _rainThresholdMm = 0.1;
+
+/// Look-back period for the rain history and the last rain event.
+const Duration rainHistoryWindow = Duration(hours: 24);
 
 /// One precipitation value at a point in time, from any weather source.
 ///
@@ -12,7 +16,7 @@ Map<String, dynamic> _rainEvent(RainSample sample, String source) => {
   'source': source,
 };
 
-/// The most recent rain (> [rainThresholdMm]) within the last
+/// The most recent rain (> [_rainThresholdMm]) within the last
 /// [rainHistoryWindow] up to [now], or null. [samples] must be sorted by time.
 Map<String, dynamic>? findLastRainEvent(
   List<RainSample> samples, {
@@ -24,14 +28,14 @@ Map<String, dynamic>? findLastRainEvent(
     final s = samples[i];
     if (!s.time.isBefore(windowStart) &&
         !s.time.isAfter(now) &&
-        s.rainMm > rainThresholdMm) {
+        s.rainMm > _rainThresholdMm) {
       return _rainEvent(s, source);
     }
   }
   return null;
 }
 
-/// The first rain (> [rainThresholdMm]) after [now], or null. [samples] must
+/// The first rain (> [_rainThresholdMm]) after [now], or null. [samples] must
 /// be sorted by time.
 Map<String, dynamic>? findNextRainEvent(
   List<RainSample> samples, {
@@ -39,7 +43,7 @@ Map<String, dynamic>? findNextRainEvent(
   required String source,
 }) {
   for (final s in samples) {
-    if (s.time.isAfter(now) && s.rainMm > rainThresholdMm) {
+    if (s.time.isAfter(now) && s.rainMm > _rainThresholdMm) {
       return _rainEvent(s, source);
     }
   }

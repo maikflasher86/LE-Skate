@@ -18,7 +18,6 @@ List<double> alignToTimes<T>(
   }).toList();
 }
 
-/// DWD precipitation within a training window.
 typedef DwdWindowSummary = ({
   double totalMm,
   int maxProbability,

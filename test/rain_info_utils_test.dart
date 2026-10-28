@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inliner2/models/forecast_response.dart';
-import 'package:inliner2/utils/rain_info_utils.dart';
+import 'package:inliner2/ui/widgets/header_card.dart';
 
 void main() {
   final now = DateTime(2026, 7, 5, 12);

@@ -4,7 +4,6 @@ import 'package:inliner2/ui/app_colors.dart';
 import 'package:inliner2/ui/widgets/sheet_scaffold.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-/// Compact bottom sheet for imprint.
 class AboutSheet extends StatefulWidget {
   const AboutSheet({super.key});
   @override

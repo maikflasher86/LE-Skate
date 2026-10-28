@@ -3,11 +3,9 @@ import 'package:inliner2/services/training_settings_service.dart';
 import 'package:inliner2/ui/app_colors.dart';
 import 'package:inliner2/ui/widgets/sheet_scaffold.dart';
 import 'package:inliner2/utils/date_utils.dart';
-import 'package:inliner2/utils/season_utils.dart';
 import 'package:inliner2/utils/session_utils.dart';
 import 'package:inliner2/utils/training_schedule.dart';
 
-/// Bottom sheet for selecting active training days.
 class TrainingDaysSheet extends StatefulWidget {
   const TrainingDaysSheet({super.key});
 
@@ -23,8 +21,6 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
   /// Saves still in flight; awaited before the sheet is closed so the
   /// reload triggered by closing sees the latest settings.
   final List<Future<void>> _pendingSaves = [];
-
-  // Day list is derived from the central schedule map – no duplication needed.
 
   @override
   void initState() {
@@ -104,10 +100,7 @@ class _TrainingDaysSheetState extends State<TrainingDaysSheet> {
           else
             for (final info in scheduleDayInfoList())
               _DayRow(
-                weekday: info.weekday,
-                time: info.trainingTime,
-                badgeLabel: info.badgeLabel,
-                badgeColor: _badgeColor(info.category, info.regularParity),
+                info: info,
                 active: _activeDays.contains(info.weekday),
                 onChanged: (v) => _toggle(info.weekday, v),
               ),
@@ -163,25 +156,18 @@ Color _badgeColor(TrainingCategory category, WeekParity parity) {
 
 class _DayRow extends StatelessWidget {
   const _DayRow({
-    required this.weekday,
-    required this.time,
+    required this.info,
     required this.active,
     required this.onChanged,
-    this.badgeLabel,
-    this.badgeColor,
   });
 
-  final int weekday;
-  final String time;
+  final ScheduleDayInfo info;
   final bool active;
   final ValueChanged<bool> onChanged;
-  final String? badgeLabel;
-  final Color? badgeColor;
-
-  bool get _isWeekend => weekday >= 6;
 
   @override
   Widget build(BuildContext context) {
+    final badgeLabel = info.badgeLabel;
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () => onChanged(!active),
@@ -205,7 +191,7 @@ class _DayRow extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                weekdayLabel(weekday),
+                weekdayLabel(info.weekday),
                 style: TextStyle(
                   fontSize: 15,
                   color: active ? Colors.white : Colors.white54,
@@ -217,17 +203,17 @@ class _DayRow extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (badgeLabel != null && badgeColor != null) ...[
+                if (badgeLabel != null) ...[
                   _ColorBox(
-                    label: badgeLabel!,
-                    color: badgeColor!,
+                    label: badgeLabel,
+                    color: _badgeColor(info.category, info.regularParity),
                     active: active,
                   ),
                   const SizedBox(width: 6),
                 ],
                 _ColorBox(
-                  label: time,
-                  color: _isWeekend ? accentGreen : brandBlue,
+                  label: info.trainingTime,
+                  color: info.weekday >= 6 ? accentGreen : brandBlue,
                   active: active,
                 ),
               ],

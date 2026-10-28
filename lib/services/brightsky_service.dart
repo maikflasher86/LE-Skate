@@ -10,7 +10,6 @@ import 'package:inliner2/models/location.dart';
 class BrightSkyService {
   const BrightSkyService();
 
-  /// Fetches precipitation for the given [location].
   /// [forecastDays] limits how far ahead data is requested (default: 10 days).
   Future<List<DwdHourlyPoint>> fetchPrecipitation({
     required Location location,

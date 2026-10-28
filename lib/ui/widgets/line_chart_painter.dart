@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// One line of a [LineChartPainter].
 class ChartSeries {
   const ChartSeries({
     required this.values,
@@ -11,8 +10,6 @@ class ChartSeries {
 
   final List<double> values;
   final Color color;
-
-  /// Legend label.
   final String label;
 
   @override

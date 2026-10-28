@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:inliner2/models/hourly_point.dart';
 import 'package:inliner2/models/training_forecast.dart';
+import 'package:inliner2/models/weather_metrics.dart';
 import 'package:inliner2/ui/app_colors.dart';
 import 'package:inliner2/ui/widgets/line_chart.dart';
 import 'package:inliner2/ui/widgets/line_chart_painter.dart';
 import 'package:inliner2/ui/widgets/score_badge.dart';
 import 'package:inliner2/ui/widgets/sheet_scaffold.dart';
-import 'package:inliner2/ui/widgets/training_detail/detail_widgets.dart';
 import 'package:inliner2/utils/api_utils.dart';
 import 'package:inliner2/utils/date_utils.dart';
 import 'package:inliner2/utils/precip_series.dart';
@@ -43,7 +43,7 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
   @override
   void initState() {
     super.initState();
-    _points = _loadPoints();
+    _points = hourlyPointsOfDay(widget.rawApiJson, training.start);
     _precipScrollController.addListener(
       () => _syncScroll(_precipScrollController, _probScrollController),
     );
@@ -66,14 +66,6 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
     _precipScrollController.dispose();
     _probScrollController.dispose();
     super.dispose();
-  }
-
-  List<HourlyPoint> _loadPoints() {
-    final periodData = extractHourlyPointsByTraining(widget.rawApiJson, [
-      training,
-    ]);
-    if (periodData.isEmpty) return const [];
-    return periodData.first.points;
   }
 
   @override
@@ -103,14 +95,9 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
                     _buildHeader(),
                     const SizedBox(height: 20),
                     // Score bar
-                    const DetailSectionTitle(title: 'Bewertung'),
+                    const _DetailSectionTitle(title: 'Bewertung'),
                     const SizedBox(height: 10),
-                    DetailScoreBar(
-                      label: 'KI-Bewertung',
-                      icon: Icons.auto_awesome_rounded,
-                      value: training.llmScore,
-                      color: accentViolet,
-                    ),
+                    _DetailScoreBar(value: training.llmScore),
                     const SizedBox(height: 16),
                     ..._buildReasonSection(),
                     ..._buildWeatherSection(),
@@ -163,12 +150,11 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
     );
   }
 
-  /// Reasoning text plus the optional recommendation box.
   List<Widget> _buildReasonSection() {
     final recommendation = training.recommendation?.trim();
     final accentColor = verdictColor(training.verdict);
     return [
-      const DetailSectionTitle(title: 'Begründung'),
+      const _DetailSectionTitle(title: 'Begründung'),
       const SizedBox(height: 8),
       Container(
         width: double.infinity,
@@ -231,16 +217,29 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
     );
     return [
       const SizedBox(height: 20),
-      const DetailSectionTitle(title: 'Wetter im Trainingszeitraum'),
+      const _DetailSectionTitle(title: 'Wetter im Trainingszeitraum'),
       const SizedBox(height: 10),
-      WeatherGrid(weather: weather),
+      _WeatherGrid(weather: weather),
       if (dwd != null) ...[
         const SizedBox(height: 16),
-        CombinedPrecipBubble(
-          omPrecipMm: weather.precipitationMm,
-          omProbPercent: weather.precipitationProbabilityPercent.toInt(),
-          dwdTotalMm: dwd.totalMm,
-          dwdMaxProbPercent: dwd.maxProbability,
+        Row(
+          children: [
+            Expanded(
+              child: _PrecipBubbleTile(
+                source: 'Open-Meteo',
+                precipMm: weather.precipitationMm,
+                probability: weather.precipitationProbabilityPercent.toInt(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _PrecipBubbleTile(
+                source: 'DWD',
+                precipMm: dwd.totalMm,
+                probability: dwd.maxProbability,
+              ),
+            ),
+          ],
         ),
       ],
     ];
@@ -292,7 +291,7 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
 
     return [
       const SizedBox(height: 20),
-      const DetailSectionTitle(title: 'Stündlicher Verlauf'),
+      const _DetailSectionTitle(title: 'Stündlicher Verlauf'),
       const SizedBox(height: 10),
       hourlyChart(
         'Temperatur',
@@ -352,5 +351,224 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
         (p) => p.cloudCoverPercent,
       ),
     ];
+  }
+}
+
+class _DetailSectionTitle extends StatelessWidget {
+  const _DetailSectionTitle({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title.toUpperCase(),
+      style: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.2,
+        color: Colors.white.withValues(alpha: 0.40),
+      ),
+    );
+  }
+}
+
+/// Labelled 0–100 progress bar of the AI score.
+class _DetailScoreBar extends StatelessWidget {
+  const _DetailScoreBar({required this.value});
+
+  final int? value;
+
+  @override
+  Widget build(BuildContext context) {
+    const color = accentViolet;
+    final pct = (value ?? 0).clamp(0, 100) / 100.0;
+    final displayValue = value?.toString() ?? '–';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.auto_awesome_rounded, size: 14, color: color),
+            const SizedBox(width: 6),
+            Text(
+              'KI-Bewertung',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withValues(alpha: 0.70),
+              ),
+            ),
+            const Spacer(),
+            Text(
+              displayValue,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: value != null ? color : Colors.white38,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: Stack(
+            children: [
+              Container(
+                height: 6,
+                width: double.infinity,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              FractionallySizedBox(
+                widthFactor: pct,
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Two-column grid of the aggregated weather values.
+class _WeatherGrid extends StatelessWidget {
+  const _WeatherGrid({required this.weather});
+
+  final WeatherMetrics weather;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (
+        Icons.thermostat_rounded,
+        '${weather.temperatureC.toStringAsFixed(1)} °C',
+        'Temperatur',
+      ),
+      (Icons.air_rounded, '${weather.windKmh.toStringAsFixed(0)} km/h', 'Wind'),
+      (
+        Icons.water_drop_rounded,
+        '${weather.precipitationMm.toStringAsFixed(1)} mm/h',
+        'Niederschlag',
+      ),
+      (
+        Icons.grain_rounded,
+        '${weather.precipitationProbabilityPercent.toStringAsFixed(0)} %',
+        'Regenrisiko',
+      ),
+      (
+        Icons.cloud_rounded,
+        '${weather.cloudCoverPercent.toStringAsFixed(0)} %',
+        'Wolken',
+      ),
+    ];
+
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: items.map((item) {
+        final (icon, value, label) = item;
+        return Container(
+          width: (MediaQuery.of(context).size.width - 56) / 2 - 4,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: glassDecoration(),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: Colors.white.withValues(alpha: 0.50)),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.45),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _PrecipBubbleTile extends StatelessWidget {
+  const _PrecipBubbleTile({
+    required this.source,
+    required this.precipMm,
+    required this.probability,
+  });
+
+  final String source;
+  final double precipMm;
+  final int probability;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = precipRiskColor(probability);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.water_drop_rounded, size: 13, color: color),
+              const SizedBox(width: 5),
+              Text(
+                source,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${precipMm.toStringAsFixed(2)} mm/h',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '$probability % Risiko',
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

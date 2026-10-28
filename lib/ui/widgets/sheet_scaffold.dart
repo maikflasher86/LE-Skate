@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inliner2/ui/app_colors.dart';
 
-/// Small rounded bar at the top of a bottom sheet.
 class SheetDragHandle extends StatelessWidget {
   const SheetDragHandle({super.key});
 
@@ -20,7 +19,6 @@ class SheetDragHandle extends StatelessWidget {
   }
 }
 
-/// Heading of a bottom sheet.
 class SheetTitle extends StatelessWidget {
   const SheetTitle(this.text, {super.key});
 
@@ -39,8 +37,6 @@ class SheetTitle extends StatelessWidget {
   }
 }
 
-/// Shows a scroll-controlled bottom sheet with the app's sheet background
-/// and rounded top corners.
 Future<T?> showAppSheet<T>(
   BuildContext context,
   WidgetBuilder builder, {

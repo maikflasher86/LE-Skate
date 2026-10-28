@@ -1,17 +1,11 @@
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 
-/// Truncates [dateTime] to midnight (year/month/day only), dropping the
-/// time-of-day component. Useful for day-based comparisons such as
-/// "how many days ahead is this?".
 DateTime dateOnly(DateTime dateTime) =>
     DateTime(dateTime.year, dateTime.month, dateTime.day);
 
-String _twoDigits(int n) => n.toString().padLeft(2, '0');
-
-/// Formats a time of day as `HH:mm`.
 String formatHourMinute(int hour, int minute) =>
-    '${_twoDigits(hour)}:${_twoDigits(minute)}';
+    '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 
 String formatDateTime(DateTime dateTime) =>
     DateFormat('dd.MM.yyyy HH:mm').format(dateTime.toLocal());

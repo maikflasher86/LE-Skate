@@ -1,4 +1,4 @@
-import 'package:inliner2/utils/season_utils.dart';
+import 'package:inliner2/utils/session_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Manages active training days (1=Mon … 7=Sun).

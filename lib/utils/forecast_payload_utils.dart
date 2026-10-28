@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:inliner2/models/training_session.dart';
 import 'package:inliner2/utils/evaluation_utils.dart';
-import 'package:inliner2/utils/forecast_constants.dart';
 import 'package:inliner2/utils/parsing_utils.dart';
 import 'package:inliner2/utils/rain_event_utils.dart';
 import 'package:inliner2/utils/session_utils.dart';
+
+/// Period before training start in which rain matters (asphalt drying).
+const Duration preTrainingWindow = Duration(hours: 4);
 
 // ---------------------------------------------------------------------------
 // Parsed weather data for one location.
@@ -69,8 +71,6 @@ List<Map<String, dynamic>> _rainEntries(
       {'time': w.hourly.times[i], 'rain_mm': w.hourly.points[i].rainMm},
 ];
 
-/// Builds the payload entry for one [session], evaluated on the weather [w]
-/// of its location.
 Map<String, dynamic> _buildTrainingEntry(
   TrainingSession session,
   _LocationWeather w,
