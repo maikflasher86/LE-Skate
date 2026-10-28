@@ -48,14 +48,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # cedvdb/action-flutter-build-android only installs its own JDK 17 if no
-      # java is found. Set up JDK 21 first so the Android build compiles against
-      # Java 21 (matching sourceCompatibility/targetCompatibility in build.gradle.kts).
       - name: Set up JDK
         uses: actions/setup-java@v6
         with:
           distribution: 'temurin'
           java-version: '25'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.47.8'
+          cache: true
+          pub-cache: true
 
       - name: Create secrets.json
         uses: ./.github/actions/create-secrets
@@ -64,12 +69,23 @@ jobs:
           llm_api_base: ${{ vars.LLM_API_BASE }}
           llm_model: ${{ vars.LLM_MODEL }}
 
-      - uses: cedvdb/action-flutter-build-android@v1
-        with:
-          keystore-base64: ${{ secrets.ANDROID_RELEASE_KEY }}
-          keystore-password: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
-          build-cmd: flutter build apk --release --split-per-abi --dart-define-from-file=secrets.json
-          working-directory: ./
+      # android/app/build.gradle.kts reads android/key.properties for release signing.
+      - name: Configure release signing
+        working-directory: android
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_RELEASE_KEY }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE" | base64 --decode > app/keystore.jks
+          {
+            echo "storeFile=keystore.jks"
+            echo "keyAlias=upload"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEYSTORE_PASSWORD"
+          } > key.properties
+
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi --dart-define-from-file=secrets.json
 
       # Extract the app version from pubspec.yaml (e.g. "0.1.2" from
       # "version: 0.1.2+3") to include it in the artifact name below.
@@ -97,7 +113,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.47.0'
+          flutter-version: '3.47.8'
           cache: true
           pub-cache: true
 
@@ -141,7 +157,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.47.0'
+          flutter-version: '3.47.8'
           cache: true
           pub-cache: true
 
@@ -209,7 +225,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          flutter-version: '3.47.0'
+          flutter-version: '3.47.8'
           cache: true
           pub-cache: true
 
