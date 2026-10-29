@@ -128,6 +128,33 @@ void main() {
   });
 
   group('nextSessions (winter)', () {
+    test('starts the 2026 EVS Saturday training on 7 November', () async {
+      final sessions = await nextSessions(
+        DateTime(2026, 10, 30),
+        activeDays: {DateTime.saturday},
+        maxCount: 5,
+      );
+
+      expect(
+        sessions.map((session) => session.start),
+        [
+          DateTime(2026, 11, 7, 14),
+          DateTime(2026, 11, 14, 14),
+          DateTime(2026, 11, 21, 14),
+        ],
+      );
+    });
+
+    test('keeps the normal winter Saturday start in later years', () async {
+      final sessions = await nextSessions(
+        DateTime(2027, 10, 30),
+        activeDays: {DateTime.saturday},
+        maxCount: 1,
+      );
+
+      expect(sessions.single.start, DateTime(2027, 10, 30, 14));
+    });
+
     test(
       'marks the Tuesday outdoor training as non-indoor and Saturday sports-hall training as indoor',
       () async {

@@ -269,6 +269,11 @@ Future<List<TrainingSession>> nextSessions(
     // Looked up per date: the season may switch within the look-ahead window.
     final entry = scheduleFor(date)[weekday];
     if (entry == null) continue;
+    if (date.isBefore(DateTime(2026, 11, 7)) &&
+        isWinterSeason(date) &&
+        entry.location == sporthalleEvsLocation) {
+      continue;
+    }
 
     final start = _at(date, entry.startHour, entry.startMinute);
     final end = _at(date, entry.endHour, entry.endMinute);

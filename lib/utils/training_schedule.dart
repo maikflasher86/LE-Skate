@@ -37,7 +37,7 @@ const landauerBrueckeLocation = Location(
 const sporthalleEvsLocation = Location(
   lat: 51.33499,
   lon: 12.37985,
-  label: 'Sporthalle EVS',
+  label: 'Sporthalle Evangelisches Schulzentrum',
 );
 
 /// Indoor hall "Rabet" for winter Monday training.
