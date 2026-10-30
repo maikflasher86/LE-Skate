@@ -1,4 +1,5 @@
 import 'package:inliner2/models/location.dart';
+import 'package:inliner2/models/training_course.dart';
 
 /// Classifies a training session.
 ///
@@ -14,6 +15,8 @@ enum WeekParity { any, odd, even }
 // Locations
 // ---------------------------------------------------------------------------
 
+// --- Summer training locations ---------------------------------------------
+
 const cossiLocation = Location(
   lat: 51.2858270307334,
   lon: 12.345881282832073,
@@ -26,6 +29,8 @@ const moeckernTrackLocation = Location(
   label: 'Bahn Möckern',
 );
 
+// --- Winter training locations ---------------------------------------------
+
 /// Outdoor training location at Landauer Brücke (winter Tuesday).
 const landauerBrueckeLocation = Location(
   lat: 51.33636,
@@ -37,22 +42,31 @@ const landauerBrueckeLocation = Location(
 const sporthalleEvsLocation = Location(
   lat: 51.33499,
   lon: 12.37985,
-  label: 'Sporthalle Evangelisches Schulzentrum',
+  label: 'Evangelisches Schulzentrum (EvaSchulze)',
 );
 
 /// Indoor hall "Rabet" for winter Monday training.
 const sporthalleRabetLocation = Location(
   lat: 51.3444,
   lon: 12.4046,
-  label: 'Sporthalle Rabet',
+  label: 'TH "Am Rabet"',
 );
 
-/// Outdoor stair training at the Völkerschlachtdenkmal (winter Thursday).
+/// Outdoor stair training at the Völki
 const voelkiLocation = Location(
   lat: 51.3138,
   lon: 12.4135,
   label: 'Völki',
 );
+
+/// Indoor strength room at the RR-Bahn (winter).
+const kraftraumRrBahnLocation = Location(
+  lat: 51.3122137,
+  lon: 12.3282271,
+  label: 'Kraftraum RR-Bahn',
+);
+
+// --- One-time event locations ----------------------------------------------
 
 const porscheLocation = Location(
   lat: 51.40619918755847,
@@ -71,7 +85,7 @@ typedef ScheduleEntry = ({
   int startMinute,
   int endHour,
   int endMinute,
-  Location location,
+  Location? location,
   TrainingCategory category,
 
   /// In which weeks [category] applies (default: any).
@@ -88,8 +102,10 @@ typedef ScheduleEntry = ({
 
   /// Whether this training happens indoors (e.g. sports hall), in which
   /// case weather has no bearing on the training and is not fetched or
-  /// evaluated at all; only day/time are shown.
+  /// evaluated at all. Course details can still be shown.
   bool isIndoor,
+  bool requiresRegistration,
+  List<TrainingCourse> courses,
 });
 
 /// Summer training data per weekday (April–last Monday of October).
@@ -105,8 +121,11 @@ const Map<int, ScheduleEntry> summerSchedule = {
     category: TrainingCategory.special,
     regularParity: WeekParity.any,
     badgeLabel: 'Cossi',
-    forecastDays: 1, // Cossi training is always Monday – no multi-day forecast needed
+    // Cossi training is always Monday – no multi-day forecast needed
+    forecastDays: 1,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [],
   ),
   2: (
     // Tuesday
@@ -121,6 +140,8 @@ const Map<int, ScheduleEntry> summerSchedule = {
     badgeLabel: null,
     forecastDays: 8,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [],
   ),
   3: (
     // Wednesday
@@ -135,6 +156,8 @@ const Map<int, ScheduleEntry> summerSchedule = {
     badgeLabel: 'Technik',
     forecastDays: 8,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [],
   ),
   4: (
     // Thursday
@@ -149,6 +172,8 @@ const Map<int, ScheduleEntry> summerSchedule = {
     badgeLabel: null,
     forecastDays: 8,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [],
   ),
   5: (
     // Friday
@@ -163,6 +188,8 @@ const Map<int, ScheduleEntry> summerSchedule = {
     badgeLabel: 'gerade KW',
     forecastDays: 8,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [],
   ),
   6: (
     // Saturday
@@ -177,6 +204,8 @@ const Map<int, ScheduleEntry> summerSchedule = {
     badgeLabel: null,
     forecastDays: 8,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [],
   ),
   7: (
     // Sunday
@@ -191,6 +220,8 @@ const Map<int, ScheduleEntry> summerSchedule = {
     badgeLabel: 'ungerade KW',
     forecastDays: 8,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [],
   ),
 };
 
@@ -208,8 +239,16 @@ const Map<int, ScheduleEntry> winterSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: 'Rabet',
     forecastDays: 8,
-    // Indoor: Athletik, Kraft, Koordination, Spiel (Eisenbahnstraße 50).
     isIndoor: true,
+    requiresRegistration: false,
+    courses: [
+      TrainingCourse(
+        category: 'Fitness',
+        instructors: ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        content: 'Athletik + Spiel',
+        equipment: 'Turnschuh',
+      ),
+    ],
   ),
   2: (
     // Tuesday
@@ -224,6 +263,40 @@ const Map<int, ScheduleEntry> winterSchedule = {
     badgeLabel: 'Landauer Brücke',
     forecastDays: 8,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [
+      TrainingCourse(
+        category: 'Fitness',
+        instructors: ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        content: 'Athletik/Lauf',
+        equipment: 'Turnschuh / warme Kleidung',
+        notes: ['Outdoor'],
+      ),
+    ],
+  ),
+  3: (
+    // Wednesday
+    trainingName: 'Kraftraum RR-Bahn',
+    startHour: 18,
+    startMinute: 30,
+    endHour: 20,
+    endMinute: 30,
+    location: kraftraumRrBahnLocation,
+    category: TrainingCategory.regular,
+    regularParity: WeekParity.any,
+    badgeLabel: 'Kraftraum',
+    forecastDays: 8,
+    isIndoor: true,
+    requiresRegistration: true,
+    courses: [
+      TrainingCourse(
+        category: 'Fitness',
+        instructors: ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        content: 'Athletik',
+        equipment: 'Turnschuh',
+        notes: ['Nur nach Voranmeldung'],
+      ),
+    ],
   ),
   4: (
     // Thursday
@@ -238,6 +311,16 @@ const Map<int, ScheduleEntry> winterSchedule = {
     badgeLabel: 'Völki',
     forecastDays: 8,
     isIndoor: false,
+    requiresRegistration: false,
+    courses: [
+      TrainingCourse(
+        category: 'Fitness',
+        instructors: ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        content: 'Lauf + Athletik',
+        equipment: 'Turnschuh / warme Kleidung',
+        notes: ['Outdoor'],
+      ),
+    ],
   ),
   6: (
     // Saturday
@@ -251,9 +334,25 @@ const Map<int, ScheduleEntry> winterSchedule = {
     regularParity: WeekParity.any,
     badgeLabel: 'EVS',
     forecastDays: 8,
-    // Indoor sports hall training: weather is irrelevant, so no forecast
-    // is fetched or evaluated for this day, only day/time are shown.
+    // Indoor sports hall training: no weather forecast is fetched or evaluated.
     isIndoor: true,
+    requiresRegistration: false,
+    courses: [
+      TrainingCourse(
+        category: 'Fitness',
+        instructors: ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        content: 'Skate',
+        equipment: 'Skates / Technik & Spaß',
+        notes: ['Sporthalle'],
+      ),
+      TrainingCourse(
+        category: 'Kurs',
+        instructors: ['Sven Knauer-Goldschmidt'],
+        content: 'Skate',
+        equipment: 'Skates / Technik & Spaß',
+        notes: ['Sporthalle', 'Nur nach Voranmeldung'],
+      ),
+    ],
   ),
 };
 

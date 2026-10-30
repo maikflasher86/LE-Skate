@@ -1,4 +1,5 @@
 import 'package:inliner2/models/location.dart';
+import 'package:inliner2/models/training_course.dart';
 
 class TrainingSession {
   const TrainingSession({
@@ -8,7 +9,9 @@ class TrainingSession {
     required this.start,
     required this.end,
     required this.location,
+    required this.locationLabel,
     this.isIndoor = false,
+    this.courses = const [],
   });
 
   final String id;
@@ -16,8 +19,10 @@ class TrainingSession {
   final String trainingName;
   final DateTime start;
   final DateTime end;
-  final Location location;
+  final Location? location;
+  final String locationLabel;
 
   /// Indoor training (e.g. sports hall): weather is irrelevant for it.
   final bool isIndoor;
+  final List<TrainingCourse> courses;
 }

@@ -81,8 +81,10 @@ Map<String, dynamic> _buildTrainingEntry(
     'training_name': session.trainingName,
     'start': session.start.toIso8601String(),
     'end': session.end.toIso8601String(),
-    'location': session.location.toJson(),
+    'location': session.location?.toJson(),
+    'location_label': session.locationLabel,
     'is_indoor': session.isIndoor,
+    'courses': session.courses.map((course) => course.toJson()).toList(),
     'score': null,
     'llm_score': null,
     'verdict': 'Indoor',
@@ -92,8 +94,7 @@ Map<String, dynamic> _buildTrainingEntry(
     'rain_before_training': <Map<String, dynamic>>[],
     'precipitation_15m': <Map<String, dynamic>>[],
   };
-  // Indoor training (e.g. sports hall): weather is irrelevant, so no
-  // weather/evaluation is computed at all, only day/time are shown.
+  // Indoor training has no weather evaluation, but keeps its course details.
   if (session.isIndoor) return base;
 
   // Rain in the pre-training window (asphalt drying period)
@@ -108,11 +109,7 @@ Map<String, dynamic> _buildTrainingEntry(
   // Contains precipitation_mm AND precipitation_probability for LLM
   final window15mEnd = session.end.add(const Duration(hours: 2));
   final precip15mWindow = <Map<String, dynamic>>[];
-  for (
-    var i = 0;
-    i < w.times15m.length && i < w.precipitation15m.length;
-    i++
-  ) {
+  for (var i = 0; i < w.times15m.length && i < w.precipitation15m.length; i++) {
     final t = DateTime.parse(w.times15m[i]).toLocal();
     if (!t.isBefore(windowStart) && !t.isAfter(window15mEnd)) {
       precip15mWindow.add({
@@ -189,7 +186,7 @@ Future<Map<String, dynamic>> buildForecastPayload(
       _buildTrainingEntry(
         session,
         // Pick the weather data for this session's location; fall back to primary.
-        weatherByLocation[session.location.label] ?? primary,
+        weatherByLocation[session.location?.label] ?? primary,
       ),
   ]..sort((a, b) => (a['start'] as String).compareTo(b['start'] as String));
 

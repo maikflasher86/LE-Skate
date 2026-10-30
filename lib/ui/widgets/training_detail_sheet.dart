@@ -93,15 +93,18 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
                   padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                   children: [
                     _buildHeader(),
-                    const SizedBox(height: 20),
-                    // Score bar
-                    const _DetailSectionTitle(title: 'Bewertung'),
-                    const SizedBox(height: 10),
-                    _DetailScoreBar(value: training.llmScore),
-                    const SizedBox(height: 16),
-                    ..._buildReasonSection(),
-                    ..._buildWeatherSection(),
-                    ..._buildCharts(),
+                    ..._buildCourseDetails(),
+                    if (!training.isIndoor) ...[
+                      const SizedBox(height: 20),
+                      // Score bar
+                      const _DetailSectionTitle(title: 'Bewertung'),
+                      const SizedBox(height: 10),
+                      _DetailScoreBar(value: training.llmScore),
+                      const SizedBox(height: 16),
+                      ..._buildReasonSection(),
+                      ..._buildWeatherSection(),
+                      ..._buildCharts(),
+                    ],
                   ],
                 ),
               ),
@@ -110,6 +113,54 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
         );
       },
     );
+  }
+
+  List<Widget> _buildCourseDetails() {
+    final locationLabel = training.locationLabel;
+    if (training.courses.isEmpty && locationLabel == null) {
+      return const [];
+    }
+
+    return [
+      const SizedBox(height: 20),
+      const _DetailSectionTitle(title: 'Kursdetails'),
+      const SizedBox(height: 10),
+      if (locationLabel != null)
+        _CourseDetailRow(label: 'Ort', value: locationLabel),
+      for (final course in training.courses) ...[
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: glassDecoration(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                course.category,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _CourseDetailRow(
+                label: 'Übungsleiter',
+                value: course.instructors.join(', '),
+              ),
+              _CourseDetailRow(label: 'Inhalt', value: course.content),
+              _CourseDetailRow(label: 'Ausrüstung', value: course.equipment),
+              if (course.notes.isNotEmpty)
+                _CourseDetailRow(
+                  label: 'Hinweis',
+                  value: course.notes.join('\n'),
+                ),
+            ],
+          ),
+        ),
+      ],
+    ];
   }
 
   Widget _buildHeader() {
@@ -145,7 +196,8 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
             ],
           ),
         ),
-        ScoreBadge(score: training.llmScore, verdict: training.verdict),
+        if (!training.isIndoor)
+          ScoreBadge(score: training.llmScore, verdict: training.verdict),
       ],
     );
   }
@@ -352,6 +404,43 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
       ),
     ];
   }
+}
+
+class _CourseDetailRow extends StatelessWidget {
+  const _CourseDetailRow({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 100,
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.48),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withValues(alpha: 0.82),
+              height: 1.35,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _DetailSectionTitle extends StatelessWidget {

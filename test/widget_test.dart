@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:inliner2/main.dart';
 import 'package:inliner2/models/forecast_response.dart';
 import 'package:inliner2/models/location.dart';
+import 'package:inliner2/models/training_course.dart';
 import 'package:inliner2/models/training_forecast.dart';
 import 'package:inliner2/models/weather_metrics.dart';
 import 'package:inliner2/services/forecast_service.dart';
@@ -84,6 +85,27 @@ void main() {
               reason: '',
               weather: null,
               isIndoor: true,
+              locationLabel: 'Evangelisches Schulzentrum (EvaSchulze)',
+              courses: const [
+                TrainingCourse(
+                  category: 'Fitness',
+                  instructors: [
+                    'Annett Marien',
+                    'Michael Marien',
+                    'Annett Voigt',
+                  ],
+                  content: 'Skate',
+                  equipment: 'Skates / Technik & Spaß',
+                  notes: ['Sporthalle'],
+                ),
+                TrainingCourse(
+                  category: 'Kurs',
+                  instructors: ['Sven Knauer-Goldschmidt'],
+                  content: 'Skate',
+                  equipment: 'Skates / Technik & Spaß',
+                  notes: ['Sporthalle', 'Nur nach Voranmeldung'],
+                ),
+              ],
             ),
             rawApiJson: '',
           ),
@@ -96,6 +118,19 @@ void main() {
     expect(find.text('21.11.2026 14:00 – 16:00 Uhr'), findsOneWidget);
     expect(find.byType(ScoreBadge), findsNothing);
     expect(find.text('Details & Diagramme'), findsNothing);
+
+    await tester.tap(find.text('EVS'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TrainingDetailSheet), findsOneWidget);
+    expect(find.text('KURSDETAILS'), findsOneWidget);
+    expect(
+      find.text('Evangelisches Schulzentrum (EvaSchulze)'),
+      findsOneWidget,
+    );
+    expect(find.text('Sven Knauer-Goldschmidt'), findsOneWidget);
+    expect(find.text('Übungsleiter'), findsNWidgets(2));
+    expect(find.textContaining('Nur nach Voranmeldung'), findsOneWidget);
   });
 
   testWidgets('tapping a training card opens the detail sheet', (
@@ -227,8 +262,7 @@ class _FakeRoadWetRepository implements ForecastRepository {
           end: DateTime(2026, 7, 5, 12, 0),
           llmScore: null,
           verdict: 'No',
-          reason:
-              'Regen kurz vor dem Training – Fahrbahn nass, Training nicht möglich.',
+          reason: 'Regen kurz vor dem Training – Fahrbahn nass, Training nicht möglich.',
           recommendation: null,
           weather: WeatherMetrics(
             temperatureC: 18.0,

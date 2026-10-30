@@ -1,5 +1,6 @@
 import 'package:inliner2/models/dwd_hourly_point.dart';
 import 'package:inliner2/models/precipitation_15m_point.dart';
+import 'package:inliner2/models/training_course.dart';
 import 'package:inliner2/models/weather_metrics.dart';
 
 class TrainingForecast {
@@ -17,6 +18,8 @@ class TrainingForecast {
     this.dwdPoints = const [],
     this.precipitation15mPoints = const [],
     this.isIndoor = false,
+    this.locationLabel,
+    this.courses = const [],
   });
 
   factory TrainingForecast.fromJson(Map<String, dynamic> json) {
@@ -44,6 +47,13 @@ class TrainingForecast {
               .map(Precipitation15mPoint.fromJson)
               .toList(),
       isIndoor: json['is_indoor'] as bool? ?? false,
+      locationLabel:
+          json['location_label'] as String? ??
+          (json['location'] as Map<String, dynamic>?)?['label'] as String?,
+      courses: (json['courses'] as List<dynamic>? ?? const [])
+          .cast<Map<String, dynamic>>()
+          .map(TrainingCourse.fromJson)
+          .toList(),
     );
   }
 
@@ -64,7 +74,11 @@ class TrainingForecast {
   /// Open-Meteo precipitation in 15-minute resolution around training time.
   final List<Precipitation15mPoint> precipitation15mPoints;
 
-  /// Indoor training (e.g. sports hall): weather is irrelevant for it, so no
-  /// forecast was fetched or evaluated; only day/time should be shown.
+  /// Indoor training has no weather evaluation, but course details can still
+  /// be shown.
   final bool isIndoor;
+
+  final String? locationLabel;
+
+  final List<TrainingCourse> courses;
 }

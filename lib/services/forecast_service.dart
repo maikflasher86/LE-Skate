@@ -9,6 +9,7 @@ import 'package:inliner2/services/training_settings_service.dart';
 import 'package:inliner2/utils/dwd_merge_utils.dart';
 import 'package:inliner2/utils/forecast_payload_utils.dart';
 import 'package:inliner2/utils/session_utils.dart';
+import 'package:inliner2/utils/training_schedule.dart';
 
 abstract class ForecastRepository {
   Future<ForecastResponse> loadForecast();
@@ -104,7 +105,7 @@ class ForecastService implements ForecastRepository {
     final location =
         (firstTraining?['location'] as Map<String, dynamic>?) ??
         locationMap.values.firstOrNull?.toJson() ??
-        const Location(lat: 0, lon: 0, label: 'Unbekannt').toJson();
+        moeckernTrackLocation.toJson();
     evaluatedPayload['location'] = location;
     return ForecastResponse.fromJson(evaluatedPayload);
   }

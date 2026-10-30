@@ -27,7 +27,11 @@ void main() {
 
     test('hides alternatives but keeps one-time events', () {
       expect(
-        visibleTrainings([regular, alternative, event], showAlternatives: false),
+        visibleTrainings([
+          regular,
+          alternative,
+          event,
+        ], showAlternatives: false),
         [regular, event],
       );
     });
@@ -61,20 +65,20 @@ void main() {
 
         expect(sunday.length, 1);
         expect(sunday.single.trainingName, 'Porsche Event');
-        expect(sunday.single.location.label, 'Porsche');
+        expect(sunday.single.location?.label, 'Porsche');
       },
     );
   });
 
   group('effectiveActiveDays', () {
     test(
-      'falls back to the winter schedule when stored days are summer-only',
+      'falls back to regular winter days when stored days are summer-only',
       () {
-        // Mid-November: winter season, whose schedule defines Monday (1),
-        // Tuesday (2), Thursday (4) and Saturday (6). The summer-only days
-        // {3, 5, 7} don't match any winter day at all.
+        // The fallback excludes Wednesday (3) because it requires registration.
+        // The remaining winter days are Monday, Tuesday, Thursday and Saturday.
+        // The summer-only days {5, 7} don't match any winter day.
         final winterDate = DateTime(2026, 11, 15);
-        final result = effectiveActiveDays({3, 5, 7}, now: winterDate);
+        final result = effectiveActiveDays({5, 7}, now: winterDate);
 
         expect(result, {1, 2, 4, 6});
       },
@@ -93,7 +97,7 @@ void main() {
       'is never empty in winter even with summer-only stored active days',
       () {
         final winterDate = DateTime(2026, 11, 15);
-        final storedActiveDays = {3, 5, 7};
+        final storedActiveDays = {5, 7};
         final effective = effectiveActiveDays(
           storedActiveDays,
           now: winterDate,
@@ -104,17 +108,17 @@ void main() {
       },
     );
 
-    test(
-      'excludes the indoor sports-hall locations in winter',
-      () {
-        final winterDate = DateTime(2026, 11, 15);
-        final locations = locationsForActiveDays({1, 2, 6}, now: winterDate);
+    test('excludes indoor locations in winter', () {
+      final winterDate = DateTime(2026, 11, 15);
+      final locations = locationsForActiveDays({1, 2, 6}, now: winterDate);
 
-        expect(locations.keys, contains('Landauer Brücke'));
-        expect(locations.keys, isNot(contains('Sporthalle EVS')));
-        expect(locations.keys, isNot(contains('Sporthalle Rabet')));
-      },
-    );
+      expect(locations.keys, contains('Landauer Brücke'));
+      expect(
+        locations.keys,
+        isNot(contains('Evangelisches Schulzentrum (EvaSchulze)')),
+      );
+      expect(locations.keys, isNot(contains('TH "Am Rabet"')));
+    });
   });
 
   group('forecastDaysPerLocation', () {
@@ -122,12 +126,32 @@ void main() {
       final winterDate = DateTime(2026, 11, 15);
       final result = await forecastDaysPerLocation({2, 6}, now: winterDate);
 
-      expect(result.keys, isNot(contains('Sporthalle EVS')));
+      expect(
+        result.keys,
+        isNot(contains('Evangelisches Schulzentrum (EvaSchulze)')),
+      );
       expect(result.keys, contains('Landauer Brücke'));
     });
   });
 
   group('nextSessions (winter)', () {
+    test('includes the manually activated Wednesday gym session', () async {
+      final sessions = await nextSessions(
+        DateTime(2026, 11, 16, 12),
+        activeDays: {DateTime.wednesday},
+        maxCount: 1,
+      );
+
+      expect(sessions.single.trainingName, 'Kraftraum RR-Bahn');
+      expect(sessions.single.start, DateTime(2026, 11, 18, 18, 30));
+      expect(sessions.single.end, DateTime(2026, 11, 18, 20, 30));
+      expect(sessions.single.isIndoor, isTrue);
+      expect(sessions.single.location, isNull);
+      expect(sessions.single.locationLabel, 'Kraftraum RR-Bahn');
+      expect(sessions.single.courses.single.category, 'Fitness');
+      expect(sessions.single.courses.single.notes, ['Nur nach Voranmeldung']);
+    });
+
     test('starts the 2026 EVS Saturday training on 7 November', () async {
       final sessions = await nextSessions(
         DateTime(2026, 10, 30),
@@ -135,14 +159,11 @@ void main() {
         maxCount: 5,
       );
 
-      expect(
-        sessions.map((session) => session.start),
-        [
-          DateTime(2026, 11, 7, 14),
-          DateTime(2026, 11, 14, 14),
-          DateTime(2026, 11, 21, 14),
-        ],
-      );
+      expect(sessions.map((session) => session.start), [
+        DateTime(2026, 11, 7, 14),
+        DateTime(2026, 11, 14, 14),
+        DateTime(2026, 11, 21, 14),
+      ]);
     });
 
     test('keeps the normal winter Saturday start in later years', () async {
@@ -155,22 +176,19 @@ void main() {
       expect(sessions.single.start, DateTime(2027, 10, 30, 14));
     });
 
-    test(
-      'marks the Tuesday outdoor training as non-indoor and Saturday sports-hall training as indoor',
-      () async {
-        final winterDate = DateTime(2026, 11, 16); // Monday
-        final sessions = await nextSessions(
-          winterDate,
-          activeDays: {2, 6},
-          maxCount: 5,
-        );
+    test('marks the Tuesday outdoor training as non-indoor and Saturday sports-hall training as indoor', () async {
+      final winterDate = DateTime(2026, 11, 16); // Monday
+      final sessions = await nextSessions(
+        winterDate,
+        activeDays: {2, 6},
+        maxCount: 5,
+      );
 
-        final tuesday = sessions.firstWhere((s) => s.start.weekday == 2);
-        final saturday = sessions.firstWhere((s) => s.start.weekday == 6);
+      final tuesday = sessions.firstWhere((s) => s.start.weekday == 2);
+      final saturday = sessions.firstWhere((s) => s.start.weekday == 6);
 
-        expect(tuesday.isIndoor, isFalse);
-        expect(saturday.isIndoor, isTrue);
-      },
-    );
+      expect(tuesday.isIndoor, isFalse);
+      expect(saturday.isIndoor, isTrue);
+    });
   });
 }

@@ -58,7 +58,10 @@ void main() {
 
   group('categoryForDate', () {
     test('Wednesday Technik in summer is a regular day', () {
-      expect(categoryForDate(DateTime(2026, 7, 8, 19)), TrainingCategory.regular);
+      expect(
+        categoryForDate(DateTime(2026, 7, 8, 19)),
+        TrainingCategory.regular,
+      );
     });
 
     test('Friday in an even week is regular, in an odd week alternative', () {
@@ -81,19 +84,24 @@ void main() {
     });
 
     test('Monday Cossi in summer is a special day', () {
-      expect(categoryForDate(DateTime(2026, 7, 6, 18)), TrainingCategory.special);
+      expect(
+        categoryForDate(DateTime(2026, 7, 6, 18)),
+        TrainingCategory.special,
+      );
     });
 
-    test('winter Monday is regular, a weekday without schedule is alternative',
-        () {
-      expect(
-        categoryForDate(DateTime(2026, 11, 16, 18)),
-        TrainingCategory.regular,
-      );
-      expect(
-        categoryForDate(DateTime(2026, 11, 18, 18)),
-        TrainingCategory.alternative,
-      );
-    });
+    test(
+      'winter Monday is regular, a weekday without schedule is alternative',
+      () {
+        expect(
+          categoryForDate(DateTime(2026, 11, 16, 18)),
+          TrainingCategory.regular,
+        );
+        expect(
+          categoryForDate(DateTime(2026, 11, 20, 18)),
+          TrainingCategory.alternative,
+        );
+      },
+    );
   });
 }

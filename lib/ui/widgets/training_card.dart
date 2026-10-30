@@ -21,16 +21,39 @@ class TrainingCard extends StatelessWidget {
   final TrainingForecast training;
   final String rawApiJson;
 
+  void _showDetails(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          TrainingDetailSheet(training: training, rawApiJson: rawApiJson),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Indoor trainings: weather is irrelevant, so only day/time are shown
-    // (no score, reason or forecast).
+    // Indoor trainings have no weather evaluation or forecast.
     if (training.isIndoor) {
       return _TrainingCardShell(
         accent: accentBlue,
+        onTap: () => _showDetails(context),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(14, 13, 13, 13),
-          child: _CardTitle(training: training),
+          padding: const EdgeInsets.fromLTRB(14, 13, 13, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _CardTitle(training: training),
+              const SizedBox(height: 8),
+              Text(
+                'Kursdetails',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Colors.white.withValues(alpha: 0.45),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -40,13 +63,7 @@ class TrainingCard extends StatelessWidget {
 
     return _TrainingCardShell(
       accent: accent,
-      onTap: () => showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) =>
-            TrainingDetailSheet(training: training, rawApiJson: rawApiJson),
-      ),
+      onTap: () => _showDetails(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

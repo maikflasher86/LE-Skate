@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// Manages active training days (1=Mon … 7=Sun).
 class TrainingSettingsService {
   static const _key = 'active_training_days';
+  static const _winterDaysKey = 'active_training_days_winter';
   static const _showAlternativesKey = 'show_alternative_trainings';
 
   /// Default activated week-days in the summer season.
@@ -15,22 +16,36 @@ class TrainingSettingsService {
   /// Default: hide alternative trainings (Fri/Sun outside calendar week rule).
   static const defaultShowAlternatives = false;
 
-  static Set<int> defaultDaysFor(DateTime date) => Set<int>.from(
-    isWinterSeason(date) ? defaultWinterDays : defaultDays,
-  );
+  static Set<int> defaultDaysFor(DateTime date) =>
+      Set<int>.from(isWinterSeason(date) ? defaultWinterDays : defaultDays);
 
-  static Future<Set<int>> loadActiveDays() async {
+  static Future<Set<int>> loadActiveDays({DateTime? now}) async {
+    final reference = now ?? DateTime.now();
     final prefs = await SharedPreferences.getInstance();
-    final days = (prefs.getStringList(_key) ?? const <String>[])
+    final isWinter = isWinterSeason(reference);
+    final winterDays = isWinter ? prefs.getStringList(_winterDaysKey) : null;
+    final days = (winterDays ?? prefs.getStringList(_key) ?? const <String>[])
         .map(int.tryParse)
         .whereType<int>()
         .toSet();
-    return days.isEmpty ? defaultDaysFor(DateTime.now()) : days;
+    if (isWinter && winterDays == null) {
+      days.removeWhere(
+        (day) => scheduleFor(reference)[day]?.requiresRegistration ?? false,
+      );
+    }
+    return effectiveActiveDays(
+      days.isEmpty ? defaultDaysFor(reference) : days,
+      now: reference,
+    );
   }
 
-  static Future<void> saveActiveDays(Set<int> days) async {
+  static Future<void> saveActiveDays(Set<int> days, {DateTime? now}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, days.map((d) => '$d').toList());
+    final values = days.map((d) => '$d').toList();
+    await prefs.setStringList(_key, values);
+    if (isWinterSeason(now ?? DateTime.now())) {
+      await prefs.setStringList(_winterDaysKey, values);
+    }
   }
 
   static Future<bool> loadShowAlternatives() async {

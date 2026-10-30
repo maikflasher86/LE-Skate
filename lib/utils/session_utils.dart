@@ -129,13 +129,10 @@ List<OneTimeEvent> _relevantOneTimeEvents(DateTime now) {
 /// Resolves the weekdays that are actually usable for the current season's
 /// schedule.
 ///
-/// The user's stored [activeDays] (e.g. the summer-only days `{3, 5, 7}`)
-/// may not exist at all in the other season's schedule (winter only defines
-/// Monday, Tuesday, Thursday and Saturday). Without this fallback that
-/// mismatch would leave zero active days, and in turn zero locations to
-/// fetch weather for, e.g. right after the season switches to winter. In
-/// that case, fall back to the current season's own regular
-/// (non-alternative) training days instead of ending up with no data at all.
+/// The user's stored [activeDays] may not exist in the current season's
+/// schedule. Without this fallback, that mismatch would leave no active days
+/// or locations to fetch weather for. Registration-only sessions are excluded
+/// from the fallback until the user activates them explicitly.
 Set<int> effectiveActiveDays(Set<int> activeDays, {DateTime? now}) {
   final reference = now ?? DateTime.now();
   final schedule = scheduleFor(reference);
@@ -143,7 +140,11 @@ Set<int> effectiveActiveDays(Set<int> activeDays, {DateTime? now}) {
   if (matching.isNotEmpty) return matching;
 
   final regularDays = schedule.entries
-      .where((e) => e.value.category != TrainingCategory.alternative)
+      .where(
+        (e) =>
+            e.value.category != TrainingCategory.alternative &&
+            !e.value.requiresRegistration,
+      )
       .map((e) => e.key)
       .toSet();
   return regularDays.isNotEmpty ? regularDays : schedule.keys.toSet();
@@ -156,15 +157,18 @@ Set<int> effectiveActiveDays(Set<int> activeDays, {DateTime? now}) {
 /// Indoor-only trainings (see [ScheduleEntry]'s `isIndoor`) are excluded
 /// since weather is irrelevant for them and no forecast is fetched for their
 /// location.
-Map<String, Location> locationsForActiveDays(Set<int> activeDays, {DateTime? now}) {
+Map<String, Location> locationsForActiveDays(
+  Set<int> activeDays, {
+  DateTime? now,
+}) {
   final reference = now ?? DateTime.now();
   final schedule = scheduleFor(reference);
   final result = <String, Location>{};
   for (final day in activeDays) {
     final entry = schedule[day];
-    if (entry != null && !entry.isIndoor) {
-      result[entry.location.label] = entry.location;
-    }
+    final location = entry?.location;
+    if (entry == null || entry.isIndoor || location == null) continue;
+    result[location.label] = location;
   }
   for (final event in _relevantOneTimeEvents(reference)) {
     result[event.location.label] = event.location;
@@ -198,12 +202,12 @@ Future<Map<String, int>> forecastDaysPerLocation(
   final result = <String, int>{};
 
   for (final session in sessions) {
-    if (session.isIndoor) continue;
-    final label = session.location.label;
+    final location = session.location;
+    if (session.isIndoor || location == null) continue;
+    final label = location.label;
     final sessionDay = dateOnly(session.start);
     // forecast_days=1 covers today only; +1 for each extra calendar day.
-    final required =
-        sessionDay.difference(todayStart).inDays + 1;
+    final required = sessionDay.difference(todayStart).inDays + 1;
     final current = result[label] ?? 0;
     if (required > current) result[label] = required;
   }
@@ -212,8 +216,9 @@ Future<Map<String, int>> forecastDaysPerLocation(
   final schedule = scheduleFor(reference);
   for (final day in activeDays) {
     final entry = schedule[day];
-    if (entry == null || entry.isIndoor) continue;
-    final label = entry.location.label;
+    final location = entry?.location;
+    if (entry == null || entry.isIndoor || location == null) continue;
+    final label = location.label;
     if (!result.containsKey(label)) {
       result[label] = entry.forecastDays;
     }
@@ -252,9 +257,7 @@ Future<List<TrainingSession>> nextSessions(
   // Dates on which a one-time event takes place replace the regular
   // weekday training for that date (e.g. the Sunday training doesn't take
   // place because of the Porsche Event), so no weather is fetched for it.
-  final oneTimeEventDates = events
-      .map((event) => dateOnly(event.date))
-      .toSet();
+  final oneTimeEventDates = events.map((event) => dateOnly(event.date)).toSet();
 
   for (
     var daysAhead = 0;
@@ -289,7 +292,9 @@ Future<List<TrainingSession>> nextSessions(
         start: start,
         end: end,
         location: entry.location,
+        locationLabel: entry.location?.label ?? 'Unbekannt',
         isIndoor: entry.isIndoor,
+        courses: entry.courses,
       ),
     );
   }
@@ -305,12 +310,11 @@ Future<List<TrainingSession>> nextSessions(
         start: start,
         end: end,
         location: event.location,
+        locationLabel: event.location.label,
       ),
     );
   }
 
   sessions.sort((a, b) => a.start.compareTo(b.start));
-  return sessions.length > maxCount
-      ? sessions.sublist(0, maxCount)
-      : sessions;
+  return sessions.length > maxCount ? sessions.sublist(0, maxCount) : sessions;
 }

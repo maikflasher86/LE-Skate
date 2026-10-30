@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inliner2/models/training_forecast.dart';
 import 'package:inliner2/utils/forecast_payload_utils.dart';
 
 /// Builds a synthetic Open-Meteo response with hourly data from
@@ -50,7 +51,7 @@ String _openMeteoFixture() {
 }
 
 void main() {
-  // Monday in winter: Monday = indoor (Sporthalle Rabet),
+  // Monday in winter: Monday = indoor (TH "Am Rabet"),
   // Tuesday = outdoor (Landauer Brücke).
   final now = DateTime(2026, 11, 16, 12);
 
@@ -84,10 +85,17 @@ void main() {
       expect(indoor['training_name'], 'Rabet');
       expect(indoor['start'], '2026-11-16T18:30:00.000');
       expect(indoor['end'], '2026-11-16T20:15:00.000');
-      expect(
-        (indoor['location'] as Map)['label'],
-        'Sporthalle Rabet',
-      );
+      expect((indoor['location'] as Map)['label'], 'TH "Am Rabet"');
+      final parsedIndoor = TrainingForecast.fromJson(indoor);
+      expect(parsedIndoor.locationLabel, 'TH "Am Rabet"');
+      expect(parsedIndoor.courses.single.category, 'Fitness');
+      expect((indoor['courses'] as List).single, {
+        'category': 'Fitness',
+        'instructors': ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        'content': 'Athletik + Spiel',
+        'equipment': 'Turnschuh',
+        'notes': [],
+      });
       expect(indoor['is_indoor'], isTrue);
       expect(indoor['score'], isNull);
       expect(indoor['llm_score'], isNull);
@@ -188,5 +196,44 @@ void main() {
     expect(payload['rain_history_24h'], isEmpty);
     expect(payload['last_rain_event'], isNull);
     expect(payload['next_rain_event'], isNull);
+  });
+
+  test(
+    'includes both Saturday categories without duplicating the session',
+    () async {
+      final payload = await buildForecastPayload({
+        'bodies': <String, String>{},
+        'active_days': [6],
+      }, now: DateTime(2026, 11, 16, 12));
+      final trainings = (payload['trainings'] as List)
+          .cast<Map<String, dynamic>>();
+      final saturday = trainings.firstWhere(
+        (training) => training['title'] == 'Samstag',
+      );
+
+      expect(saturday['start'], '2026-11-21T14:00:00.000');
+      final courses = (saturday['courses'] as List)
+          .cast<Map<String, dynamic>>();
+      expect(courses.map((course) => course['category']), ['Fitness', 'Kurs']);
+      expect(courses[1]['instructors'], ['Sven Knauer-Goldschmidt']);
+      expect(courses[1]['notes'], ['Sporthalle', 'Nur nach Voranmeldung']);
+    },
+  );
+
+  test('keeps the gym venue label without inventing map coordinates', () async {
+    final payload = await buildForecastPayload({
+      'bodies': <String, String>{},
+      'active_days': [3],
+    }, now: now);
+    final training = (payload['trainings'] as List)
+        .cast<Map<String, dynamic>>()
+        .single;
+
+    expect(training['location'], isNull);
+    expect(training['location_label'], 'Kraftraum RR-Bahn');
+    expect(
+      TrainingForecast.fromJson(training).locationLabel,
+      'Kraftraum RR-Bahn',
+    );
   });
 }
