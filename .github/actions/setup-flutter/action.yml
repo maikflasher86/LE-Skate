@@ -1,0 +1,39 @@
+name: 'Set up Flutter'
+description: 'Installs Flutter, fetches packages and reads the app version'
+
+inputs:
+  build_info_placeholder:
+    description: >
+      Create a placeholder lib/generated/build_info.dart. The Android build
+      skips it because the Gradle task "generateBuildInfo" creates the real file.
+    default: 'true'
+
+outputs:
+  version:
+    description: 'App version from pubspec.yaml without build number'
+    value: ${{ steps.version.outputs.version }}
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: subosito/flutter-action@v2
+      with:
+        channel: stable
+        flutter-version: '3.47.8'
+        cache: true
+        pub-cache: true
+
+    - shell: bash
+      run: flutter pub get
+
+    - if: inputs.build_info_placeholder == 'true'
+      shell: bash
+      run: |
+        mkdir -p lib/generated
+        printf "const String kBuildTimestamp = 'dev';\n" > lib/generated/build_info.dart
+
+    - id: version
+      shell: bash
+      run: |
+        version=$(grep '^version:' pubspec.yaml | sed 's/version:\s*//' | cut -d '+' -f1)
+        echo "version=$version" >> "$GITHUB_OUTPUT"
