@@ -216,7 +216,7 @@ void main() {
           .cast<Map<String, dynamic>>();
       expect(courses.map((course) => course['category']), ['Fitness', 'Kurs']);
       expect(courses[1]['instructors'], ['Sven Knauer-Goldschmidt']);
-      expect(courses[1]['notes'], ['Sporthalle', 'Nur nach Voranmeldung']);
+      expect(courses[1]['notes'], ['Nur nach Voranmeldung']);
     },
   );
 
