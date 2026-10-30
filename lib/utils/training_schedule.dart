@@ -53,11 +53,7 @@ const sporthalleRabetLocation = Location(
 );
 
 /// Outdoor stair training at the Völki
-const voelkiLocation = Location(
-  lat: 51.3138,
-  lon: 12.4135,
-  label: 'Völki',
-);
+const voelkiLocation = Location(lat: 51.3138, lon: 12.4135, label: 'Völki');
 
 /// Indoor strength room at the RR-Bahn (winter).
 const kraftraumRrBahnLocation = Location(
@@ -85,7 +81,7 @@ typedef ScheduleEntry = ({
   int startMinute,
   int endHour,
   int endMinute,
-  Location? location,
+  Location location,
   TrainingCategory category,
 
   /// In which weeks [category] applies (default: any).

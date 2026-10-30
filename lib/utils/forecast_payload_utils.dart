@@ -81,8 +81,7 @@ Map<String, dynamic> _buildTrainingEntry(
     'training_name': session.trainingName,
     'start': session.start.toIso8601String(),
     'end': session.end.toIso8601String(),
-    'location': session.location?.toJson(),
-    'location_label': session.locationLabel,
+    'location': session.location.toJson(),
     'is_indoor': session.isIndoor,
     'courses': session.courses.map((course) => course.toJson()).toList(),
     'score': null,
@@ -186,7 +185,7 @@ Future<Map<String, dynamic>> buildForecastPayload(
       _buildTrainingEntry(
         session,
         // Pick the weather data for this session's location; fall back to primary.
-        weatherByLocation[session.location?.label] ?? primary,
+        weatherByLocation[session.location.label] ?? primary,
       ),
   ]..sort((a, b) => (a['start'] as String).compareTo(b['start'] as String));
 

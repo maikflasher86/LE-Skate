@@ -65,7 +65,7 @@ void main() {
 
         expect(sunday.length, 1);
         expect(sunday.single.trainingName, 'Porsche Event');
-        expect(sunday.single.location?.label, 'Porsche');
+        expect(sunday.single.location.label, 'Porsche');
       },
     );
   });
@@ -146,8 +146,8 @@ void main() {
       expect(sessions.single.start, DateTime(2026, 11, 18, 18, 30));
       expect(sessions.single.end, DateTime(2026, 11, 18, 20, 30));
       expect(sessions.single.isIndoor, isTrue);
-      expect(sessions.single.location, isNull);
-      expect(sessions.single.locationLabel, 'Kraftraum RR-Bahn');
+      expect(sessions.single.location.label, 'Kraftraum RR-Bahn');
+      expect(sessions.single.location.label, 'Kraftraum RR-Bahn');
       expect(sessions.single.courses.single.category, 'Fitness');
       expect(sessions.single.courses.single.notes, ['Nur nach Voranmeldung']);
     });

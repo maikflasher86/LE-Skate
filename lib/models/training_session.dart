@@ -9,7 +9,6 @@ class TrainingSession {
     required this.start,
     required this.end,
     required this.location,
-    required this.locationLabel,
     this.isIndoor = false,
     this.courses = const [],
   });
@@ -19,8 +18,7 @@ class TrainingSession {
   final String trainingName;
   final DateTime start;
   final DateTime end;
-  final Location? location;
-  final String locationLabel;
+  final Location location;
 
   /// Indoor training (e.g. sports hall): weather is irrelevant for it.
   final bool isIndoor;

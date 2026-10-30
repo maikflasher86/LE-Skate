@@ -220,7 +220,7 @@ void main() {
     },
   );
 
-  test('keeps the gym venue label without inventing map coordinates', () async {
+  test('uses the gym venue label as location', () async {
     final payload = await buildForecastPayload({
       'bodies': <String, String>{},
       'active_days': [3],
@@ -229,8 +229,6 @@ void main() {
         .cast<Map<String, dynamic>>()
         .single;
 
-    expect(training['location'], isNull);
-    expect(training['location_label'], 'Kraftraum RR-Bahn');
     expect(
       TrainingForecast.fromJson(training).locationLabel,
       'Kraftraum RR-Bahn',

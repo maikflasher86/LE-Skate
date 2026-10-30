@@ -48,7 +48,6 @@ class TrainingForecast {
               .toList(),
       isIndoor: json['is_indoor'] as bool? ?? false,
       locationLabel:
-          json['location_label'] as String? ??
           (json['location'] as Map<String, dynamic>?)?['label'] as String?,
       courses: (json['courses'] as List<dynamic>? ?? const [])
           .cast<Map<String, dynamic>>()

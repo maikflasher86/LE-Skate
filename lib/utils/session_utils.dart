@@ -166,9 +166,8 @@ Map<String, Location> locationsForActiveDays(
   final result = <String, Location>{};
   for (final day in activeDays) {
     final entry = schedule[day];
-    final location = entry?.location;
-    if (entry == null || entry.isIndoor || location == null) continue;
-    result[location.label] = location;
+    if (entry == null || entry.isIndoor) continue;
+    result[entry.location.label] = entry.location;
   }
   for (final event in _relevantOneTimeEvents(reference)) {
     result[event.location.label] = event.location;
@@ -202,9 +201,8 @@ Future<Map<String, int>> forecastDaysPerLocation(
   final result = <String, int>{};
 
   for (final session in sessions) {
-    final location = session.location;
-    if (session.isIndoor || location == null) continue;
-    final label = location.label;
+    if (session.isIndoor) continue;
+    final label = session.location.label;
     final sessionDay = dateOnly(session.start);
     // forecast_days=1 covers today only; +1 for each extra calendar day.
     final required = sessionDay.difference(todayStart).inDays + 1;
@@ -216,9 +214,8 @@ Future<Map<String, int>> forecastDaysPerLocation(
   final schedule = scheduleFor(reference);
   for (final day in activeDays) {
     final entry = schedule[day];
-    final location = entry?.location;
-    if (entry == null || entry.isIndoor || location == null) continue;
-    final label = location.label;
+    if (entry == null || entry.isIndoor) continue;
+    final label = entry.location.label;
     if (!result.containsKey(label)) {
       result[label] = entry.forecastDays;
     }
@@ -292,7 +289,6 @@ Future<List<TrainingSession>> nextSessions(
         start: start,
         end: end,
         location: entry.location,
-        locationLabel: entry.location?.label ?? 'Unbekannt',
         isIndoor: entry.isIndoor,
         courses: entry.courses,
       ),
@@ -310,7 +306,6 @@ Future<List<TrainingSession>> nextSessions(
         start: start,
         end: end,
         location: event.location,
-        locationLabel: event.location.label,
       ),
     );
   }
