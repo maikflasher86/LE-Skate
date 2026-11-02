@@ -12,6 +12,7 @@ import 'package:inliner2/services/forecast_service.dart';
 import 'package:inliner2/ui/widgets/score_badge.dart';
 import 'package:inliner2/ui/widgets/training_card.dart';
 import 'package:inliner2/ui/widgets/training_detail_sheet.dart';
+import 'package:inliner2/utils/training_schedule.dart';
 
 void main() {
   testWidgets('displays forecast header and training card', (
@@ -129,7 +130,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Sven Knauer-Goldschmidt'), findsOneWidget);
-    expect(find.text('Übungsleiter'), findsNWidgets(2));
+    expect(find.text('Trainer'), findsNWidgets(2));
     expect(find.textContaining('Nur nach Voranmeldung'), findsOneWidget);
   });
 
@@ -169,9 +170,75 @@ void main() {
     );
     expect(hint, findsOneWidget);
   });
+
+  testWidgets(
+    'opens indoor course details from the main screen without weather',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(
+        InlinerWeatherApp(service: _FakeIndoorForecastRepository()),
+      );
+      await tester.pumpAndSettle();
+
+      final card = find.byType(TrainingCard);
+      expect(card, findsOneWidget);
+      expect(find.text('Rabet'), findsOneWidget);
+      expect(find.byType(ScoreBadge), findsNothing);
+      expect(find.byType(TrainingDetailSheet), findsNothing);
+
+      // Tap the empty right side, not just the title or course-details text.
+      final bounds = tester.getRect(card);
+      await tester.tapAt(Offset(bounds.right - 20, bounds.center.dy));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(TrainingDetailSheet), findsOneWidget);
+      expect(find.text('KURSDETAILS'), findsOneWidget);
+      expect(
+        find.text(winterSchedule[DateTime.monday]!.location.label),
+        findsOneWidget,
+      );
+      expect(find.text('Athletik + Spiel'), findsOneWidget);
+      expect(find.text('BEWERTUNG'), findsNothing);
+      expect(find.text('WETTER IM TRAININGSZEITRAUM'), findsNothing);
+    },
+    variant: TargetPlatformVariant({TargetPlatform.android}),
+  );
 }
 
 // --- Fake Repositories ---
+
+class _FakeIndoorForecastRepository implements ForecastRepository {
+  @override
+  Future<ForecastResponse> loadForecast() async {
+    final schedule = winterSchedule[DateTime.monday]!;
+    return ForecastResponse(
+      location: Location(lat: 51.37, lon: 12.34, label: 'Leipzig'),
+      fetchedAt: DateTime(2026, 11, 2, 9),
+      trainings: [
+        TrainingForecast(
+          id: 'day1_2026-11-02',
+          title: 'Montag',
+          trainingName: schedule.trainingName,
+          start: DateTime(2026, 11, 2, 18, 30),
+          end: DateTime(2026, 11, 2, 20, 15),
+          llmScore: null,
+          verdict: 'Indoor',
+          reason: '',
+          weather: null,
+          isIndoor: true,
+          locationLabel: schedule.location.label,
+          courses: schedule.courses,
+        ),
+      ],
+    );
+  }
+}
 
 class _FakeForecastRepository implements ForecastRepository {
   @override

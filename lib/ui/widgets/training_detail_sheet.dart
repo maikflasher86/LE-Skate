@@ -146,7 +146,7 @@ class _TrainingDetailSheetState extends State<TrainingDetailSheet> {
               ),
               const SizedBox(height: 10),
               _CourseDetailRow(
-                label: 'Übungsleiter',
+                label: 'Trainer',
                 value: course.instructors.join(', '),
               ),
               _CourseDetailRow(label: 'Inhalt', value: course.content),
