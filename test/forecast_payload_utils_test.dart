@@ -5,7 +5,7 @@ import 'package:inliner2/models/training_forecast.dart';
 import 'package:inliner2/utils/forecast_payload_utils.dart';
 
 /// Builds a synthetic Open-Meteo response with hourly data from
-/// 2026-11-15 00:00 to 2026-11-17 23:00 (local time strings, no offset).
+/// 2026-11-15 00:00 to 2026-11-19 23:00 (local time strings, no offset).
 String _openMeteoFixture() {
   final times = <String>[];
   final temperatures = <double>[];
@@ -14,17 +14,19 @@ String _openMeteoFixture() {
     '2026-11-16T08:00': 0.5, // last rain event (within past 24 h)
     '2026-11-16T10:00': 0.05, // below the 0.1 mm threshold
     '2026-11-16T20:00': 0.08, // below the 0.1 mm threshold
-    '2026-11-17T15:00': 0.3, // next rain event, inside 4 h pre-training window
+    '2026-11-19T15:00': 0.3, // next rain event, inside 4 h pre-training window
   };
-  for (var h = 0; h < 72; h++) {
+  for (var h = 0; h < 120; h++) {
     final t = DateTime(2026, 11, 15).add(Duration(hours: h));
     final key =
         '${t.year}-${t.month.toString().padLeft(2, '0')}-'
         '${t.day.toString().padLeft(2, '0')}T'
         '${t.hour.toString().padLeft(2, '0')}:00';
     times.add(key);
-    // Only the 19:00 slot on Tuesday lies inside the training window.
-    temperatures.add(key == '2026-11-17T19:00' ? 6.0 : 10.0);
+    // Thursday's 19:00 and 20:00 slots lie inside the training window.
+    temperatures.add(
+      key == '2026-11-19T19:00' || key == '2026-11-19T20:00' ? 6.0 : 10.0,
+    );
     rains.add(rainAt[key] ?? 0.0);
   }
   return jsonEncode({
@@ -39,10 +41,10 @@ String _openMeteoFixture() {
     },
     'minutely_15': {
       'time': [
-        '2026-11-17T14:15',
-        '2026-11-17T14:30',
-        '2026-11-17T21:30',
-        '2026-11-17T21:45',
+        '2026-11-19T14:30',
+        '2026-11-19T14:45',
+        '2026-11-19T22:15',
+        '2026-11-19T22:30',
       ],
       'precipitation': [0.1, 0.2, 0.3, 0.4],
       'precipitation_probability': [10, 20, 30, 40],
@@ -52,7 +54,7 @@ String _openMeteoFixture() {
 
 void main() {
   // Monday in winter: Monday = indoor (TH "Am Rabet"),
-  // Tuesday = outdoor (Landauer Brücke).
+  // Thursday = outdoor (Völki).
   final now = DateTime(2026, 11, 16, 12);
 
   group('buildForecastPayload', () {
@@ -62,8 +64,8 @@ void main() {
     setUp(() async {
       body = _openMeteoFixture();
       payload = await buildForecastPayload({
-        'bodies': {'Landauer Brücke': body},
-        'active_days': [1, 2],
+        'bodies': {'Völki': body},
+        'active_days': [1, 2, 3, 4],
       }, now: now);
     });
 
@@ -74,7 +76,7 @@ void main() {
       expect(payload['fetched_at'], '2026-11-16T12:00:00.000');
       expect(trainings().map((t) => t['id']), [
         'day1_2026-11-16',
-        'day2_2026-11-17',
+        'day4_2026-11-19',
       ]);
       expect(payload['raw_api_json'], body);
     });
@@ -109,10 +111,10 @@ void main() {
 
     test('outdoor session is evaluated from the training window', () {
       final outdoor = trainings()[1];
-      expect(outdoor['title'], 'Dienstag');
-      expect(outdoor['training_name'], 'Landauer Brücke');
-      expect(outdoor['start'], '2026-11-17T18:30:00.000');
-      expect(outdoor['end'], '2026-11-17T19:30:00.000');
+      expect(outdoor['title'], 'Donnerstag');
+      expect(outdoor['training_name'], 'Völki');
+      expect(outdoor['start'], '2026-11-19T18:45:00.000');
+      expect(outdoor['end'], '2026-11-19T20:15:00.000');
       expect(outdoor['is_indoor'], isFalse);
       expect(outdoor['weather'], {
         'temperature_c': 6.0,
@@ -137,10 +139,10 @@ void main() {
     test('rain_before_training covers the 4 h before start', () {
       final outdoor = trainings()[1];
       expect(outdoor['rain_before_training'], [
-        {'time': '2026-11-17T15:00', 'rain_mm': 0.3},
-        {'time': '2026-11-17T16:00', 'rain_mm': 0.0},
-        {'time': '2026-11-17T17:00', 'rain_mm': 0.0},
-        {'time': '2026-11-17T18:00', 'rain_mm': 0.0},
+        {'time': '2026-11-19T15:00', 'rain_mm': 0.3},
+        {'time': '2026-11-19T16:00', 'rain_mm': 0.0},
+        {'time': '2026-11-19T17:00', 'rain_mm': 0.0},
+        {'time': '2026-11-19T18:00', 'rain_mm': 0.0},
       ]);
     });
 
@@ -148,12 +150,12 @@ void main() {
       final outdoor = trainings()[1];
       expect(outdoor['precipitation_15m'], [
         {
-          'time': '2026-11-17T14:30',
+          'time': '2026-11-19T14:45',
           'precipitation_mm': 0.2,
           'precipitation_probability': 20,
         },
         {
-          'time': '2026-11-17T21:30',
+          'time': '2026-11-19T22:15',
           'precipitation_mm': 0.3,
           'precipitation_probability': 30,
         },
@@ -175,7 +177,7 @@ void main() {
         'source': 'Open-Meteo',
       });
       expect(payload['next_rain_event'], {
-        'time': '2026-11-17T15:00',
+        'time': '2026-11-19T15:00',
         'rain_mm': 0.3,
         'source': 'Open-Meteo',
       });
@@ -220,18 +222,11 @@ void main() {
     },
   );
 
-  test('uses the gym venue label as location', () async {
+  test('does not build sessions for disabled winter days', () async {
     final payload = await buildForecastPayload({
       'bodies': <String, String>{},
-      'active_days': [3],
+      'active_days': [2, 3],
     }, now: now);
-    final training = (payload['trainings'] as List)
-        .cast<Map<String, dynamic>>()
-        .single;
-
-    expect(
-      TrainingForecast.fromJson(training).locationLabel,
-      'Kraftraum RR-Bahn',
-    );
+    expect(payload['trainings'], isEmpty);
   });
 }

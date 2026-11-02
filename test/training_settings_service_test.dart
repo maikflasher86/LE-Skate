@@ -18,16 +18,19 @@ void main() {
 
       expect(await TrainingSettingsService.loadActiveDays(now: winterDate), {
         1,
-        2,
         4,
         6,
       });
     },
   );
 
-  test('keeps a Wednesday selection explicitly saved for winter', () async {
-    await TrainingSettingsService.saveActiveDays({3}, now: winterDate);
+  test('falls back when only disabled winter days were saved', () async {
+    await TrainingSettingsService.saveActiveDays({2, 3}, now: winterDate);
 
-    expect(await TrainingSettingsService.loadActiveDays(now: winterDate), {3});
+    expect(await TrainingSettingsService.loadActiveDays(now: winterDate), {
+      1,
+      4,
+      6,
+    });
   });
 }

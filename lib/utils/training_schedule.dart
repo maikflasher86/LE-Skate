@@ -246,6 +246,7 @@ const Map<int, ScheduleEntry> winterSchedule = {
       ),
     ],
   ),
+  /*
   2: (
     // Tuesday
     trainingName: 'Landauer Brücke',
@@ -293,6 +294,7 @@ const Map<int, ScheduleEntry> winterSchedule = {
       ),
     ],
   ),
+  */
   4: (
     // Thursday
     trainingName: 'Völki',

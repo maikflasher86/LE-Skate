@@ -74,13 +74,12 @@ void main() {
     test(
       'falls back to regular winter days when stored days are summer-only',
       () {
-        // The fallback excludes Wednesday (3) because it requires registration.
-        // The remaining winter days are Monday, Tuesday, Thursday and Saturday.
+        // The remaining winter days are Monday, Thursday and Saturday.
         // The summer-only days {5, 7} don't match any winter day.
         final winterDate = DateTime(2026, 11, 15);
         final result = effectiveActiveDays({5, 7}, now: winterDate);
 
-        expect(result, {1, 2, 4, 6});
+        expect(result, {1, 4, 6});
       },
     );
 
@@ -110,9 +109,15 @@ void main() {
 
     test('excludes indoor locations in winter', () {
       final winterDate = DateTime(2026, 11, 15);
-      final locations = locationsForActiveDays({1, 2, 6}, now: winterDate);
+      final locations = locationsForActiveDays({
+        1,
+        2,
+        3,
+        4,
+        6,
+      }, now: winterDate);
 
-      expect(locations.keys, contains('Landauer Brücke'));
+      expect(locations.keys, ['Völki']);
       expect(
         locations.keys,
         isNot(contains('Evangelisches Schulzentrum (EvaSchulze)')),
@@ -124,32 +129,39 @@ void main() {
   group('forecastDaysPerLocation', () {
     test('does not request weather for the indoor Saturday location', () async {
       final winterDate = DateTime(2026, 11, 15);
-      final result = await forecastDaysPerLocation({2, 6}, now: winterDate);
+      final result = await forecastDaysPerLocation({
+        2,
+        3,
+        4,
+        6,
+      }, now: winterDate);
 
       expect(
         result.keys,
         isNot(contains('Evangelisches Schulzentrum (EvaSchulze)')),
       );
-      expect(result.keys, contains('Landauer Brücke'));
+      expect(result.keys, ['Völki']);
     });
   });
 
   group('nextSessions (winter)', () {
-    test('includes the manually activated Wednesday gym session', () async {
+    test('excludes disabled Tuesday and Wednesday sessions', () async {
       final sessions = await nextSessions(
         DateTime(2026, 11, 16, 12),
-        activeDays: {DateTime.wednesday},
-        maxCount: 1,
+        activeDays: {1, 2, 3, 4, 6},
+        maxCount: 20,
       );
 
-      expect(sessions.single.trainingName, 'Kraftraum RR-Bahn');
-      expect(sessions.single.start, DateTime(2026, 11, 18, 18, 30));
-      expect(sessions.single.end, DateTime(2026, 11, 18, 20, 30));
-      expect(sessions.single.isIndoor, isTrue);
-      expect(sessions.single.location.label, 'Kraftraum RR-Bahn');
-      expect(sessions.single.location.label, 'Kraftraum RR-Bahn');
-      expect(sessions.single.courses.single.category, 'Fitness');
-      expect(sessions.single.courses.single.notes, ['Nur nach Voranmeldung']);
+      expect(sessions, isNotEmpty);
+      expect(
+        sessions.map((session) => session.start.weekday),
+        everyElement(isNot(isIn([DateTime.tuesday, DateTime.wednesday]))),
+      );
+      expect(
+        scheduleDayInfoList(now: DateTime(2026, 11, 16))
+            .map((day) => day.weekday),
+        [1, 4, 6],
+      );
     });
 
     test('starts the 2026 EVS Saturday training on 7 November', () async {
@@ -176,18 +188,18 @@ void main() {
       expect(sessions.single.start, DateTime(2027, 10, 30, 14));
     });
 
-    test('marks the Tuesday outdoor training as non-indoor and Saturday sports-hall training as indoor', () async {
+    test('marks the Thursday outdoor training as non-indoor and Saturday sports-hall training as indoor', () async {
       final winterDate = DateTime(2026, 11, 16); // Monday
       final sessions = await nextSessions(
         winterDate,
-        activeDays: {2, 6},
+        activeDays: {4, 6},
         maxCount: 5,
       );
 
-      final tuesday = sessions.firstWhere((s) => s.start.weekday == 2);
+      final thursday = sessions.firstWhere((s) => s.start.weekday == 4);
       final saturday = sessions.firstWhere((s) => s.start.weekday == 6);
 
-      expect(tuesday.isIndoor, isFalse);
+      expect(thursday.isIndoor, isFalse);
       expect(saturday.isIndoor, isTrue);
     });
   });
