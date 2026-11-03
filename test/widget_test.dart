@@ -86,7 +86,7 @@ void main() {
               reason: '',
               weather: null,
               isIndoor: true,
-              locationLabel: 'Evangelisches Schulzentrum (EvaSchulze)',
+              locationLabel: 'Evangelisches Schulzentrum',
               courses: const [
                 TrainingCourse(
                   category: 'Fitness',
@@ -126,7 +126,7 @@ void main() {
     expect(find.byType(TrainingDetailSheet), findsOneWidget);
     expect(find.text('KURSDETAILS'), findsOneWidget);
     expect(
-      find.text('Evangelisches Schulzentrum (EvaSchulze)'),
+      find.text('Evangelisches Schulzentrum'),
       findsOneWidget,
     );
     expect(find.text('Sven Knauer-Goldschmidt'), findsOneWidget);
