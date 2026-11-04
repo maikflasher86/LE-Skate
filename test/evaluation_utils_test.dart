@@ -23,10 +23,42 @@ void main() {
     );
 
     final points = [
-      point(9, temperature: 10, precipitation: 5, rain: 5, probability: 90, wind: 50, cloud: 100),
-      point(10, temperature: 18, precipitation: 0.2, rain: 0.4, probability: 20, wind: 10, cloud: 30),
-      point(11, temperature: 20, precipitation: 0.6, rain: 0.1, probability: 40, wind: 14, cloud: 50),
-      point(12, temperature: 30, precipitation: 5, rain: 5, probability: 90, wind: 50, cloud: 100),
+      point(
+        9,
+        temperature: 10,
+        precipitation: 5,
+        rain: 5,
+        probability: 90,
+        wind: 50,
+        cloud: 100,
+      ),
+      point(
+        10,
+        temperature: 18,
+        precipitation: 0.2,
+        rain: 0.4,
+        probability: 20,
+        wind: 10,
+        cloud: 30,
+      ),
+      point(
+        11,
+        temperature: 20,
+        precipitation: 0.6,
+        rain: 0.1,
+        probability: 40,
+        wind: 14,
+        cloud: 50,
+      ),
+      point(
+        12,
+        temperature: 30,
+        precipitation: 5,
+        rain: 5,
+        probability: 90,
+        wind: 50,
+        cloud: 100,
+      ),
     ];
 
     Map<String, double>? aggregate(DateTime start, DateTime end) =>
@@ -46,6 +78,9 @@ void main() {
         'rain_mm': 0.4,
         'precipitation_probability_percent': 40.0,
         'cloud_cover_percent': 40.0,
+        'temperature_min_c': 18.0,
+        'wind_gusts_kmh': 0.0,
+        'snowfall_cm': 0.0,
       });
     });
 

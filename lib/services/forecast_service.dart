@@ -120,6 +120,8 @@ class ForecastService implements ForecastRepository {
           'rain,'
           'precipitation_probability,'
           'wind_speed_10m,'
+          'wind_gusts_10m,'
+          'snowfall,'
           'cloud_cover',
       // Higher resolution for precipitation including probability
       'minutely_15': 'precipitation,precipitation_probability',

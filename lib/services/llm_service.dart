@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:inliner2/services/secure_config_service.dart';
 import 'package:inliner2/utils/date_utils.dart';
+import 'package:inliner2/utils/forecast_payload_utils.dart';
 import 'package:inliner2/utils/llm_utils.dart';
 
 /// Evaluates the outdoor trainings of a forecast payload with the LLM
@@ -47,15 +48,21 @@ class LlmService {
         'trainings': outdoorTrainings.map((entry) {
           final start = DateTime.parse(entry['start'] as String).toLocal();
           final end = DateTime.parse(entry['end'] as String).toLocal();
+          final rainOnly = entry['evaluation_mode'] == evaluationModeRainOnly;
           return {
             'id': entry['id'],
+            'evaluation_mode': entry['evaluation_mode'],
             'title': entry['title'],
             'start': entry['start'],
             'end': entry['end'],
             'geplant':
                 '${formatHourMinute(start.hour, start.minute)}–'
                 '${formatHourMinute(end.hour, end.minute)} Uhr',
-            'weather': entry['weather'],
+            // Rain-only trainings get no cloud data and no average temperature,
+            // so the LLM cannot weigh them.
+            'weather': rainOnly
+                ? _precipitationOnly(entry['weather'] as Map<String, dynamic>?)
+                : entry['weather'],
             'precipitation_15m': entry['precipitation_15m'] ?? [],
           };
         }).toList(),
@@ -116,6 +123,22 @@ class LlmService {
   }
 }
 
+Map<String, dynamic>? _precipitationOnly(Map<String, dynamic>? weather) =>
+    weather == null
+    ? null
+    : {
+        for (final key in const [
+          'precipitation_mm',
+          'rain_mm',
+          'precipitation_probability_percent',
+          'snowfall_cm',
+          'temperature_min_c',
+          'wind_kmh',
+          'wind_gusts_kmh',
+        ])
+          key: weather[key],
+      };
+
 void _debugPrintInChunks(String message, {int chunkSize = 900}) {
   if (message.length <= chunkSize) {
     debugPrint(message);
@@ -139,7 +162,18 @@ const String _systemPrompt = """
         Du bist ein Wetter-Coach für Inline-Skating. Antworte AUSSCHLIESSLICH mit validem JSON in genau diesem Schema, ohne weiteren Text:
         {"evaluations":[{"id":"...","score":0-100,"verdict":"go|maybe|no","reason":"Begründung auf Deutsch","recommendation":"Training HH:MM–HH:MM Uhr ODER leerer String"}]}
 
-        ## Grundregel
+        ## Bewertungsmodus (Feld "evaluation_mode")
+        - "rain_only" (Wintertraining im Freien, z.B. Treppentraining am Völkerschlachtdenkmal, KEIN Inline-Skaten):
+          Bewerte nach Niederschlag UND Wintergefahren. Kälte allein, Wolken, Sonne und Komfort spielen KEINE Rolle und dürfen den Score nicht senken (5°C ohne Niederschlag, Wind oder Frost = go). Die Asphalt-Trocknungszeiten gelten nicht.
+          Niederschlag: Kein Regen im Trainingsfenster (precipitation_mm <= 0.1 UND precipitation_probability < 40) = go mit hohem Score (>= 90). Mögliche Regenwahrscheinlichkeit (40-69) = maybe. Regen oder hohe Wahrscheinlichkeit (>= 70) im Trainingsfenster = no. Regen davor oder danach außerhalb des Trainingsfensters senkt den Score nur geringfügig.
+          Schnee: snowfall_cm > 0 im Trainingsfenster = maybe, ab ca. 1 cm/h oder bei liegendem Schnee aus den Stunden davor (rain_before_training / rain_history_24h: snowfall_cm) = no, da Treppen und Wege rutschig sind.
+          Glatteis/Glätte: temperature_min_c <= 1 UND Nässe (Regen, Schnee oder Schmelzwasser) im Trainingsfenster oder in den 4h davor = hohe Glättegefahr = no. Frost bei trockenen Bedingungen ohne vorherige Nässe ist unkritisch. Nutze temperature_c in rain_before_training / rain_history_24h, um gefrierende Nässe zu erkennen.
+          Sturm: wind_gusts_kmh >= 60 = no, >= 45 oder wind_kmh >= 35 = maybe; darunter keine Auswirkung.
+          Nenne in "reason" ausdrücklich die relevante Gefahr (Regen, Schnee, Glatteis, Sturm).
+          Eine Verschiebung empfiehlst du nur, wenn eine trockene Phase (siehe Empfehlungsformat) besser passt; sie darf direkt nach dem Regen beginnen.
+        - "skating": Es gelten alle folgenden Regeln.
+
+        ## Grundregel (Modus "skating")
         Inline-Skaten ist NUR auf trockenem Asphalt möglich. Bewerte jedes Training mit einem Score (0-100) und einem verdict (go/maybe/no).
 
         ## Regenbewertung
@@ -183,7 +217,7 @@ const String _systemPrompt = """
         ## Begründung (Feld "reason")
         - Begründe ausfürlich. Erwähne, falls und wann es kurz vor dem Training geregnet hat.
         
-        ## Weitere Faktoren
+        ## Weitere Faktoren (nur Modus "skating")
         Berücksichtige Wind und Temperatur zusätzlich zu Regen in Score und Begründung.
 
         ## Zahlenformat

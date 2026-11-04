@@ -2,11 +2,7 @@ import 'package:inliner2/models/location.dart';
 import 'package:inliner2/models/training_forecast.dart';
 
 class LastRainEvent {
-  const LastRainEvent({
-    required this.time,
-    required this.rainMm,
-    this.source,
-  });
+  const LastRainEvent({required this.time, required this.rainMm, this.source});
 
   final DateTime time;
   final double rainMm;

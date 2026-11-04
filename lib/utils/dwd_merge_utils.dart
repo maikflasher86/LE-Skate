@@ -10,9 +10,7 @@ Map<String, dynamic> addDwdToPayload(
   Map<String, List<DwdHourlyPoint>> dwdByLocation,
 ) {
   if (dwdByLocation.isEmpty) {
-    debugPrint(
-      '[DWD] dwdByLocation is empty – skipping dwd_points assignment',
-    );
+    debugPrint('[DWD] dwdByLocation is empty – skipping dwd_points assignment');
     return payload;
   }
   final trainings = (payload['trainings'] as List<dynamic>)
@@ -20,8 +18,7 @@ Map<String, dynamic> addDwdToPayload(
   for (final training in trainings) {
     if (training['is_indoor'] == true) continue;
     final locationLabel =
-        (training['location'] as Map<String, dynamic>?)?['label']
-            as String? ??
+        (training['location'] as Map<String, dynamic>?)?['label'] as String? ??
         dwdByLocation.keys.first;
     final dwdPoints =
         dwdByLocation[locationLabel] ?? dwdByLocation.values.first;

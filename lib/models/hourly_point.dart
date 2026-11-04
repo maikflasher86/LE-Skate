@@ -7,6 +7,8 @@ class HourlyPoint {
     required this.precipitationProbabilityPercent,
     required this.windKmh,
     required this.cloudCoverPercent,
+    this.snowfallCm = 0,
+    this.windGustsKmh = 0,
   });
 
   final DateTime time;
@@ -16,4 +18,6 @@ class HourlyPoint {
   final double precipitationProbabilityPercent;
   final double windKmh;
   final double cloudCoverPercent;
+  final double snowfallCm;
+  final double windGustsKmh;
 }

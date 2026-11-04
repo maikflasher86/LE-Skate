@@ -156,20 +156,14 @@ void main() {
       expect(_merge(_payload(['a']), jsonEncode({'candidates': []})), expected);
       expect(_merge(_payload(['a']), jsonEncode({})), expected);
       expect(_merge(_payload(['a']), _llmBody('no json here')), expected);
-      expect(
-        _merge(_payload(['a']), _llmBody(_evaluations([]))),
-        expected,
-      );
+      expect(_merge(_payload(['a']), _llmBody(_evaluations([]))), expected);
       expect(_merge(_payload(['a']), _llmBody('{}')), expected);
     });
 
     test('throws on malformed JSON', () {
       // NOTE: current behaviour – malformed JSON is not caught here; the
       // caller (ForecastService) wraps it into an exception.
-      expect(
-        () => _merge(_payload(['a']), 'not json'),
-        throwsFormatException,
-      );
+      expect(() => _merge(_payload(['a']), 'not json'), throwsFormatException);
       expect(
         () => _merge(_payload(['a']), _llmBody('{not json}')),
         throwsFormatException,

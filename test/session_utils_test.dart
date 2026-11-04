@@ -118,10 +118,7 @@ void main() {
       }, now: winterDate);
 
       expect(locations.keys, ['Völki']);
-      expect(
-        locations.keys,
-        isNot(contains('Evangelisches Schulzentrum')),
-      );
+      expect(locations.keys, isNot(contains('Evangelisches Schulzentrum')));
       expect(locations.keys, isNot(contains('TH "Am Rabet"')));
     });
   });
@@ -136,10 +133,7 @@ void main() {
         6,
       }, now: winterDate);
 
-      expect(
-        result.keys,
-        isNot(contains('Evangelisches Schulzentrum')),
-      );
+      expect(result.keys, isNot(contains('Evangelisches Schulzentrum')));
       expect(result.keys, ['Völki']);
     });
   });

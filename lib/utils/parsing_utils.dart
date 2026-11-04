@@ -64,6 +64,15 @@ OpenMeteoHourly parseOpenMeteoHourly(
   );
   final wind = series('wind_speed_10m');
   final cloud = series('cloud_cover');
+  // Optional like the probability: older cached responses lack them.
+  final snowfall = toDoubleListOrDefault(
+    hourly['snowfall'],
+    fallbackLength: times.length,
+  );
+  final gusts = toDoubleListOrDefault(
+    hourly['wind_gusts_10m'],
+    fallbackLength: times.length,
+  );
 
   final length = [
     times.length,
@@ -73,6 +82,8 @@ OpenMeteoHourly parseOpenMeteoHourly(
     precipitationProbability.length,
     wind.length,
     cloud.length,
+    snowfall.length,
+    gusts.length,
   ].reduce(math.min);
 
   return (
@@ -87,6 +98,8 @@ OpenMeteoHourly parseOpenMeteoHourly(
           precipitationProbabilityPercent: precipitationProbability[i],
           windKmh: wind[i],
           cloudCoverPercent: cloud[i],
+          snowfallCm: snowfall[i],
+          windGustsKmh: gusts[i],
         ),
     ],
   );

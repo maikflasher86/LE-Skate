@@ -125,10 +125,7 @@ void main() {
 
     expect(find.byType(TrainingDetailSheet), findsOneWidget);
     expect(find.text('KURSDETAILS'), findsOneWidget);
-    expect(
-      find.text('Evangelisches Schulzentrum'),
-      findsOneWidget,
-    );
+    expect(find.text('Evangelisches Schulzentrum'), findsOneWidget);
     expect(find.text('Sven Knauer-Goldschmidt'), findsOneWidget);
     expect(find.text('Trainer'), findsNWidgets(2));
     expect(find.textContaining('Nur nach Voranmeldung'), findsOneWidget);

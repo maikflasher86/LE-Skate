@@ -115,6 +115,7 @@ void main() {
       expect(outdoor['start'], '2026-11-19T18:45:00.000');
       expect(outdoor['end'], '2026-11-19T20:15:00.000');
       expect(outdoor['is_indoor'], isFalse);
+      expect(outdoor['evaluation_mode'], 'rain_only');
       expect(outdoor['weather'], {
         'temperature_c': 6.0,
         'wind_kmh': 12.0,
@@ -122,6 +123,9 @@ void main() {
         'rain_mm': 0.0,
         'precipitation_probability_percent': 20.0,
         'cloud_cover_percent': 50.0,
+        'temperature_min_c': 6.0,
+        'wind_gusts_kmh': 0.0,
+        'snowfall_cm': 0.0,
       });
       expect(outdoor['llm_score'], isNull);
       expect(outdoor['verdict'], 'Pending');
@@ -132,10 +136,18 @@ void main() {
     test('rain_before_training covers the 4 h before start', () {
       final outdoor = trainings()[1];
       expect(outdoor['rain_before_training'], [
-        {'time': '2026-11-19T15:00', 'rain_mm': 0.3},
-        {'time': '2026-11-19T16:00', 'rain_mm': 0.0},
-        {'time': '2026-11-19T17:00', 'rain_mm': 0.0},
-        {'time': '2026-11-19T18:00', 'rain_mm': 0.0},
+        for (final (time, rain) in [
+          ('15:00', 0.3),
+          ('16:00', 0.0),
+          ('17:00', 0.0),
+          ('18:00', 0.0),
+        ])
+          {
+            'time': '2026-11-19T$time',
+            'rain_mm': rain,
+            'snowfall_cm': 0.0,
+            'temperature_c': 10.0,
+          },
       ]);
     });
 

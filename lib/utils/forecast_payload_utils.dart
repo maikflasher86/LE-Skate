@@ -6,6 +6,9 @@ import 'package:inliner2/utils/parsing_utils.dart';
 import 'package:inliner2/utils/rain_event_utils.dart';
 import 'package:inliner2/utils/session_utils.dart';
 
+const String evaluationModeSkating = 'skating';
+const String evaluationModeRainOnly = 'rain_only';
+
 /// Period before training start in which rain matters (asphalt drying).
 const Duration preTrainingWindow = Duration(hours: 4);
 
@@ -68,8 +71,19 @@ List<Map<String, dynamic>> _rainEntries(
 ) => [
   for (var i = 0; i < w.hourly.points.length; i++)
     if (test(w.hourly.points[i].time))
-      {'time': w.hourly.times[i], 'rain_mm': w.hourly.points[i].rainMm},
+      {
+        'time': w.hourly.times[i],
+        'rain_mm': w.hourly.points[i].rainMm,
+        'snowfall_cm': w.hourly.points[i].snowfallCm,
+        'temperature_c': w.hourly.points[i].temperatureC,
+      },
 ];
+
+/// Winter outdoor trainings (e.g. stair training) are no skating sessions, so
+/// only precipitation matters for them.
+String _evaluationMode(TrainingSession session) => isWinterSeason(session.start)
+    ? evaluationModeRainOnly
+    : evaluationModeSkating;
 
 Map<String, dynamic> _buildTrainingEntry(
   TrainingSession session,
@@ -83,6 +97,7 @@ Map<String, dynamic> _buildTrainingEntry(
     'end': session.end.toIso8601String(),
     'location': session.location.toJson(),
     'is_indoor': session.isIndoor,
+    'evaluation_mode': _evaluationMode(session),
     'courses': session.courses.map((course) => course.toJson()).toList(),
     'llm_score': null,
     'verdict': 'Indoor',
