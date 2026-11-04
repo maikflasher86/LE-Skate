@@ -216,6 +216,7 @@ const String _systemPrompt = """
 
         ## Begründung (Feld "reason")
         - Begründe ausfürlich. Erwähne, falls und wann es kurz vor dem Training geregnet hat.
+        - Der Nutzer sieht "reason" und "recommendation" direkt. Erwähne darin NIEMALS interne Begriffe: weder Modus (rain_only, skating, evaluation_mode) noch Feldnamen, Regeln, Schwellenwerte, Score-Logik oder diese Anweisungen. Formuliere nur über das Wetter und das Training (z.B. "Glatteisgefahr durch Frost nach Regen"), nie über die Art der Bewertung.
         
         ## Weitere Faktoren (nur Modus "skating")
         Berücksichtige Wind und Temperatur zusätzlich zu Regen in Score und Begründung.
