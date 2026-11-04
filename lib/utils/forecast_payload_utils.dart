@@ -84,7 +84,6 @@ Map<String, dynamic> _buildTrainingEntry(
     'location': session.location.toJson(),
     'is_indoor': session.isIndoor,
     'courses': session.courses.map((course) => course.toJson()).toList(),
-    'score': null,
     'llm_score': null,
     'verdict': 'Indoor',
     'reason': '',
@@ -126,13 +125,11 @@ Map<String, dynamic> _buildTrainingEntry(
     start: session.start,
     end: session.end,
   );
-  final evaluation = evaluate(metrics);
 
+  // Score, verdict and reason come exclusively from the LLM.
   return {
     ...base,
-    'score': evaluation.score,
-    'verdict': evaluation.verdict,
-    'reason': evaluation.reason,
+    'verdict': 'Pending',
     'weather': metrics,
     'rain_before_training': rainBeforeTraining,
     'precipitation_15m': precip15mWindow,

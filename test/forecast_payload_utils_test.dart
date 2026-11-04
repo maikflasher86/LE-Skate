@@ -99,7 +99,6 @@ void main() {
         'notes': [],
       });
       expect(indoor['is_indoor'], isTrue);
-      expect(indoor['score'], isNull);
       expect(indoor['llm_score'], isNull);
       expect(indoor['verdict'], 'Indoor');
       expect(indoor['reason'], '');
@@ -124,15 +123,9 @@ void main() {
         'precipitation_probability_percent': 20.0,
         'cloud_cover_percent': 50.0,
       });
-      expect(outdoor['score'], 70);
       expect(outdoor['llm_score'], isNull);
-      expect(outdoor['verdict'], 'Maybe');
-      expect(
-        outdoor['reason'],
-        'Temp 6.0 °C, Regen 0.00 mm/h, '
-        'Niederschlagswahrscheinlichkeit. 20 %, '
-        'Rain 0.00 mm/h, Wind 12.0 km/h, Wolken 50 %.',
-      );
+      expect(outdoor['verdict'], 'Pending');
+      expect(outdoor['reason'], '');
       expect(outdoor['recommendation'], isNull);
     });
 

@@ -2,20 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inliner2/models/hourly_point.dart';
 import 'package:inliner2/utils/evaluation_utils.dart';
 
-Map<String, double> _metrics({
-  required double temperature,
-  required double precipitation,
-  required double wind,
-  required double cloud,
-}) => {
-  'temperature_c': temperature,
-  'wind_kmh': wind,
-  'precipitation_mm': precipitation,
-  'rain_mm': precipitation,
-  'precipitation_probability_percent': 30,
-  'cloud_cover_percent': cloud,
-};
-
 void main() {
   group('aggregateMetrics', () {
     HourlyPoint point(
@@ -67,50 +53,6 @@ void main() {
       expect(
         aggregate(DateTime(2026, 7, 6, 10), DateTime(2026, 7, 6, 12)),
         isNull,
-      );
-    });
-  });
-
-  group('evaluate', () {
-    test('good weather → Go', () {
-      final result = evaluate(
-        _metrics(temperature: 20, precipitation: 0, wind: 10, cloud: 30),
-      );
-      expect(result.score, 100);
-      expect(result.verdict, 'Go');
-      expect(
-        result.reason,
-        'Temp 20.0 °C, Regen 0.00 mm/h, '
-        'Niederschlagswahrscheinlichkeit. 30 %, '
-        'Rain 0.00 mm/h, Wind 10.0 km/h, Wolken 30 %.',
-      );
-    });
-
-    test('medium weather → Maybe', () {
-      // -12 (cool) -25 (moderate rain) -8 (breezy) = 55
-      final result = evaluate(
-        _metrics(temperature: 10, precipitation: 0.5, wind: 18, cloud: 80),
-      );
-      expect(result.score, 55);
-      expect(result.verdict, 'Maybe');
-    });
-
-    test('bad weather → No, score clamped to 0', () {
-      // -30 (cold) -45 (heavy rain) -30 (storm) -7 (overcast) = -12 → 0
-      final result = evaluate(
-        _metrics(temperature: 5, precipitation: 2, wind: 35, cloud: 100),
-      );
-      expect(result.score, 0);
-      expect(result.verdict, 'No');
-    });
-
-    test('missing metrics → Maybe with placeholder reason', () {
-      final result = evaluate(null);
-      expect(result.score, 40);
-      expect(result.verdict, 'Maybe');
-      expect(
-        result.reason,
-        'Noch keine Forecast-Daten für diesen Termin verfügbar.',
       );
     });
   });

@@ -72,7 +72,6 @@ Map<String, dynamic> mergeLlmEvaluationsInPayload(Map<String, dynamic> input) {
     final llmRecommendation = llmItem['recommendation'] as String?;
 
     if (llmScore != null) {
-      entry['score'] = llmScore.clamp(0, 100);
       entry['llm_score'] = llmScore.clamp(0, 100);
     }
     if (llmVerdictRaw != null) {

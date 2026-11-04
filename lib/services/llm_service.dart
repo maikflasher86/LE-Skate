@@ -57,9 +57,6 @@ class LlmService {
                 '${formatHourMinute(end.hour, end.minute)} Uhr',
             'weather': entry['weather'],
             'precipitation_15m': entry['precipitation_15m'] ?? [],
-            'fallback_score': entry['score'],
-            'fallback_verdict': entry['verdict'],
-            'fallback_reason': entry['reason'],
           };
         }).toList(),
       };

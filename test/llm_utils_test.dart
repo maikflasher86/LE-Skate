@@ -5,7 +5,6 @@ import 'package:inliner2/utils/llm_utils.dart';
 
 Map<String, dynamic> _training(String id) => {
   'id': id,
-  'score': 50,
   'llm_score': null,
   'verdict': 'Maybe',
   'reason': 'heuristic',
@@ -75,7 +74,6 @@ void main() {
       );
 
       final trainings = _trainings(result);
-      expect(trainings.map((t) => t['score']), [100, 0, 72]);
       expect(trainings.map((t) => t['llm_score']), [100, 0, 72]);
     });
 
@@ -127,7 +125,7 @@ void main() {
       );
 
       final trainings = _trainings(result);
-      expect(trainings[0]['score'], 90);
+      expect(trainings[0]['llm_score'], 90);
       expect(trainings[0]['verdict'], 'Go');
       expect(trainings[1], _training('b'));
     });
