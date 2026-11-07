@@ -240,9 +240,9 @@ const Map<int, ScheduleEntry> winterSchedule = {
     courses: [
       TrainingCourse(
         category: 'Fitness',
-        instructors: ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        instructors: ['Susanne'],
         content: 'Athletik + Spiel',
-        equipment: 'Turnschuh',
+        equipment: 'Turnschuh + Handtuch',
       ),
     ],
   ),
@@ -312,7 +312,7 @@ const Map<int, ScheduleEntry> winterSchedule = {
     courses: [
       TrainingCourse(
         category: 'Fitness',
-        instructors: ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        instructors: ['Annett Voigt'],
         content: 'Lauf + Athletik',
         equipment: 'Turnschuh / warme Kleidung',
       ),
@@ -328,7 +328,7 @@ const Map<int, ScheduleEntry> winterSchedule = {
     location: sporthalleEvsLocation,
     category: TrainingCategory.regular,
     regularParity: WeekParity.any,
-    badgeLabel: 'EVS',
+    badgeLabel: 'Eva Schulze',
     forecastDays: 8,
     // Indoor sports hall training: no weather forecast is fetched or evaluated.
     isIndoor: true,
@@ -337,14 +337,14 @@ const Map<int, ScheduleEntry> winterSchedule = {
       TrainingCourse(
         category: 'Fitness',
         instructors: ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
-        content: 'Skate',
-        equipment: 'Skates / Technik & Spaß',
+        content: 'Technik & Spaß',
+        equipment: 'Skate mit indoor Rollen',
       ),
       TrainingCourse(
-        category: 'Kurs',
+        category: 'Technik',
         instructors: ['Sven Knauer-Goldschmidt'],
-        content: 'Skate',
-        equipment: 'Skates / Technik & Spaß',
+        content: 'Technik & Spaß',
+        equipment: 'Skate mit indoor Rollen',
         notes: ['Nur nach Voranmeldung'],
       ),
     ],

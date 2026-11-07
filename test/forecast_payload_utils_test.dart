@@ -93,9 +93,9 @@ void main() {
       expect(parsedIndoor.courses.single.category, 'Fitness');
       expect((indoor['courses'] as List).single, {
         'category': 'Fitness',
-        'instructors': ['Annett Marien', 'Michael Marien', 'Annett Voigt'],
+        'instructors': ['Susanne'],
         'content': 'Athletik + Spiel',
-        'equipment': 'Turnschuh',
+        'equipment': 'Turnschuh + Handtuch',
         'notes': [],
       });
       expect(indoor['is_indoor'], isTrue);
@@ -221,7 +221,10 @@ void main() {
       expect(saturday['start'], '2026-11-21T14:00:00.000');
       final courses = (saturday['courses'] as List)
           .cast<Map<String, dynamic>>();
-      expect(courses.map((course) => course['category']), ['Fitness', 'Kurs']);
+      expect(courses.map((course) => course['category']), [
+        'Fitness',
+        'Technik',
+      ]);
       expect(courses[1]['instructors'], ['Sven Knauer-Goldschmidt']);
       expect(courses[1]['notes'], ['Nur nach Voranmeldung']);
     },
