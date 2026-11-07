@@ -119,7 +119,7 @@ void main() {
 
       expect(locations.keys, ['Völki']);
       expect(locations.keys, isNot(contains('Evangelisches Schulzentrum')));
-      expect(locations.keys, isNot(contains('TH "Am Rabet"')));
+      expect(locations.keys, isNot(contains('Turnhalle "Rabet"')));
     });
   });
 

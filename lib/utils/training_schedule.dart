@@ -49,7 +49,7 @@ const sporthalleEvsLocation = Location(
 const sporthalleRabetLocation = Location(
   lat: 51.3444,
   lon: 12.4046,
-  label: 'TH "Am Rabet"',
+  label: 'Turnhalle "Rabet"',
 );
 
 /// Outdoor stair training at the Völki

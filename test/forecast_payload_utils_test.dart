@@ -53,7 +53,7 @@ String _openMeteoFixture() {
 }
 
 void main() {
-  // Monday in winter: Monday = indoor (TH "Am Rabet"),
+  // Monday in winter: Monday = indoor (Sporthall "Rabet"),
   // Thursday = outdoor (Völki).
   final now = DateTime(2026, 11, 16, 12);
 
@@ -87,9 +87,9 @@ void main() {
       expect(indoor['training_name'], 'Rabet');
       expect(indoor['start'], '2026-11-16T18:30:00.000');
       expect(indoor['end'], '2026-11-16T20:15:00.000');
-      expect((indoor['location'] as Map)['label'], 'TH "Am Rabet"');
+      expect((indoor['location'] as Map)['label'], 'Turnhalle "Rabet"');
       final parsedIndoor = TrainingForecast.fromJson(indoor);
-      expect(parsedIndoor.locationLabel, 'TH "Am Rabet"');
+      expect(parsedIndoor.locationLabel, 'Turnhalle "Rabet"');
       expect(parsedIndoor.courses.single.category, 'Fitness');
       expect((indoor['courses'] as List).single, {
         'category': 'Fitness',
