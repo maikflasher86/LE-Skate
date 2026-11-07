@@ -95,7 +95,7 @@ void main() {
         'category': 'Fitness',
         'instructors': ['Susanne'],
         'content': 'Athletik + Spiel',
-        'equipment': 'Turnschuh + Handtuch',
+        'equipment': 'Turnschuhe + Handtuch',
         'notes': [],
       });
       expect(indoor['is_indoor'], isTrue);

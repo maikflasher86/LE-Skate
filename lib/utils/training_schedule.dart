@@ -242,7 +242,7 @@ const Map<int, ScheduleEntry> winterSchedule = {
         category: 'Fitness',
         instructors: ['Susanne'],
         content: 'Athletik + Spiel',
-        equipment: 'Turnschuh + Handtuch',
+        equipment: 'Turnschuhe + Handtuch',
       ),
     ],
   ),
